@@ -7,3 +7,6 @@ __pycache__/
 
 # Ignore macOS specific files (optional)
 .DS_Store
+
+# environment variables
+.env*

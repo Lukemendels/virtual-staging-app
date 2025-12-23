@@ -1,0 +1,22 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // User profiles
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // Allow creation but prevent updating credits/subscription status from client
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && request.auth.uid == userId 
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['credits', 'subscriptionStatus']);
+    }
+
+    // Projects
+    match /projects/{projectId} {
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      // Projects are created/updated via server-side API (Cloud Functions/Next.js API)
+      // So we generally deny write from client, or only allow specific fields if needed.
+      // For now, deny all client writes to projects as the API handles it.
+      allow write: if false; 
+    }
+  }
+}

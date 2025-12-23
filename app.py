@@ -41,54 +41,189 @@ except Exception as e:
 
 
 # --- Imagen Backend Function (Refactored for SDK Class & GENERATION) ---
-# --- Imagen Backend Function (Refactored for SDK Class & GENERATION) ---
-def trigger_imagen_generation_sdk(prompt: str) -> tuple[str, bytes | None]:
-    '''
-    Calls the Imagen GENERATION model using the ImageGenerationModel SDK class.
+# --- Imports ---
+import streamlit as st
+import vertexai
+import google.generativeai as genai
+from PIL import Image
+import io
+import os
+
+# --- Page Configuration ---
+st.set_page_config(layout="wide")
+
+# --- GCP Configuration & Model ---
+GCP_PROJECT_ID = "virtual-staging-service"
+GCP_REGION = "us-central1"
+MODEL_ID = "gemini-2.5-flash-image-preview"
+
+# --- Initialize Vertex AI Client & Load Model ---
+# NOTE: This now relies on google-genai library and specific env vars
+# The user must set:
+# export GOOGLE_CLOUD_PROJECT="YOUR_PROJECT_ID"
+# export GOOGLE_CLOUD_LOCATION="YOUR_PROJECT_LOCATION"
+# export GOOGLE_GENAI_USE_VERTEXAI=True
+gemini_model = None
+try:
+    vertexai.init(project=GCP_PROJECT_ID, location=GCP_REGION)
+    gemini_model = genai.GenerativeModel(model_name=MODEL_ID)
+    st.sidebar.success(f"Vertex AI Initialized for project '{GCP_PROJECT_ID}'.")
+    st.sidebar.success(f"Model '{MODEL_ID}' loaded successfully.")
+    st.sidebar.info("Ensure environment variables for the 'google-genai' library are set.")
+
+except Exception as e:
+    st.error(f"Fatal Error: Could not initialize Vertex AI or load model '{MODEL_ID}'.")
+    st.error(f"Details: {e}")
+    st.error("Ensure you have run 'gcloud auth application-default login' and set the required environment variables.")
+    st.stop()
+
+# --- Gemini Backend Function (for EDITING) ---
+def trigger_gemini_editing_sdk(prompt: str, image_bytes: bytes) -> tuple[str, bytes | None]:
+    """
+    Calls the Gemini model for image editing.
     Returns a status message and potentially the resulting image bytes.
-    '''
-    st.write(f"ℹ️ Calling Vertex AI Model '{MODEL_ID}' using SDK.")
+    """
+    st.write(f"ℹ️ Calling Vertex AI Model '{MODEL_ID}' for editing.")
     st.write(f"   Using Prompt: '{prompt}'")
 
-    # Ensure model is loaded
-    if generation_model is None:
-        return "❌ Error: ImageGenerationModel object not loaded.", None
+    if gemini_model is None:
+        return "❌ Error: Gemini model not loaded.", None
 
     try:
-        # 1. Make the API call using the model object's method
-        st.write(f"⏳ Calling {MODEL_ID}.generate_images() with aspect_ratio='4:3'...") # Log aspect ratio
-        response = generation_model.generate_images(
-            prompt=prompt,
-            number_of_images=1,
-            aspect_ratio="4:3",  # <<< --- ADDED THIS LINE ---
-            # negative_prompt="", # Optional
-            # seed=123 # Optional: for reproducibility if desired
-        )
-        st.write("✅ SDK Call complete.")
+        # 1. Prepare the image for the model
+        image_part = Image.open(io.BytesIO(image_bytes))
 
-        # 2. Process the response (Same logic as before)
-        if response.images and len(response.images) > 0:
-            try:
-                 generated_image_bytes = response.images[0]._image_bytes
-                 st.write(f"   Got {len(generated_image_bytes)} bytes for the generated image.")
-                 return f"✅ Image Generation complete using {MODEL_ID}!", generated_image_bytes
-            except AttributeError:
-                 st.error("Could not access image bytes using ._image_bytes. Response structure might have changed.")
-                 st.write("Response object:", response.images[0])
-                 return "⚠️ Prediction received, but failed to extract bytes.", None
+        # 2. Make the API call
+        st.write("⏳ Calling model.generate_content()...")
+        # Pass both the image and the prompt to the model
+        response = gemini_model.generate_content([image_part, prompt])
+        st.write("✅ API Call complete.")
+
+        # 3. Process the response
+        if response.parts:
+            # Find the first image part in the response
+            first_image_part = next((part for part in response.parts if part.mime_type.startswith("image/")), None)
+            if first_image_part:
+                edited_image_bytes = first_image_part.inline_data.data
+                st.write(f"   Got {len(edited_image_bytes)} bytes for the edited image.")
+                return f"✅ Image Editing complete using {MODEL_ID}!", edited_image_bytes
+            else:
+                st.warning("API call successful but no image returned in the response.")
+                st.write("Full response text:", response.text)
+                return f"⚠️ No images returned by API ({MODEL_ID}).", None
         else:
-            st.warning("API call successful but no images returned in the response.")
-            st.write("Raw Response Object:", response)
-            return f"⚠️ No images returned by API ({MODEL_ID}).", None
+            st.warning("API call successful but no parts returned in the response.")
+            st.write("Full response text:", response.text)
+            return f"⚠️ No content returned by API ({MODEL_ID}).", None
 
     except Exception as e:
-        if "permission denied" in str(e).lower() or "caller does not have permission" in str(e).lower():
-             error_message = f"❌ Permission Denied for model '{MODEL_ID}'. Check IAM roles. Error: {e}"
-        else:
-             error_message = f"❌ Error during AI Generation call to '{MODEL_ID}': {e}"
+        error_message = f"❌ Error during AI Editing call to '{MODEL_ID}': {e}"
         st.exception(e)
         return error_message, None
-# --- End Imagen Backend Function ---
+
+# ======================================================================
+# --- START: Streamlit UI (Connected to Gemini Editing Backend) ---
+# ======================================================================
+
+st.title(f"AI Photo Editor (using {MODEL_ID})")
+st.write("Upload an interior photo, provide an editing instruction, and let the AI do the rest!")
+
+# --- Session State Initialization ---
+if 'uploaded_file_data' not in st.session_state: st.session_state.uploaded_file_data = None
+if 'edit_instruction' not in st.session_state: st.session_state.edit_instruction = "Make this room more modern."
+if 'edited_image_data' not in st.session_state: st.session_state.edited_image_data = None
+if 'editing_status_message' not in st.session_state: st.session_state.editing_status_message = ""
+
+# --- 1. File Uploader ---
+uploaded_file = st.file_uploader(
+    "Upload an interior photo to edit:",
+    type=["jpg", "jpeg", "png", "webp"]
+)
+
+if uploaded_file is not None:
+    new_image_bytes = uploaded_file.getvalue()
+    if st.session_state.uploaded_file_data != new_image_bytes:
+        st.session_state.uploaded_file_data = new_image_bytes
+        st.session_state.edited_image_data = None
+        st.session_state.editing_status_message = ""
+
+# --- 2. Get Editing Instruction ---
+st.subheader("2. Editing Instruction")
+edit_prompt = st.text_input(
+    "Describe the change you want to make:",
+    st.session_state.edit_instruction
+)
+st.session_state.edit_instruction = edit_prompt
+
+
+# --- Main Request Handling Function ---
+def process_editing_request(prompt, image_bytes):
+    """Calls the Gemini SDK editing function."""
+    st.session_state.editing_status_message = "Processing..."
+    st.session_state.edited_image_data = None
+
+    st.info(f"Using Prompt: '{prompt}'")
+    result_msg, result_bytes = trigger_gemini_editing_sdk(prompt=prompt, image_bytes=image_bytes)
+
+    st.session_state.editing_status_message = result_msg
+    st.session_state.edited_image_data = result_bytes
+    st.rerun()
+
+# --- 3. Action Button ---
+st.divider()
+st.subheader("3. Edit Image")
+button_disabled = not (st.session_state.uploaded_file_data and st.session_state.edit_instruction)
+
+if st.button(f"✨ Edit Image Now! (Using {MODEL_ID})", type="primary", disabled=button_disabled):
+    with st.spinner("AI is editing the image... Please wait."):
+        process_editing_request(
+            st.session_state.edit_instruction,
+            st.session_state.uploaded_file_data
+        )
+
+if button_disabled:
+    st.warning("Please upload an image and provide an editing instruction.")
+
+# --- 4. Display Status and Results ---
+st.divider()
+st.subheader("4. Status & Results")
+
+# Display Status Message
+status_message = st.session_state.editing_status_message
+if status_message:
+    if status_message.startswith("✅"): st.success(status_message)
+    elif status_message.startswith("❌") or status_message.startswith("⚠️"): st.warning(status_message)
+    else: st.info(status_message)
+
+# Display Images Side-by-Side
+col1, col2 = st.columns(2)
+with col1:
+    st.markdown("#### Before")
+    if st.session_state.uploaded_file_data is not None:
+        st.image(st.session_state.uploaded_file_data, use_container_width=True)
+    else:
+        st.info("Upload an image in section 1 to get started.")
+
+with col2:
+    st.markdown("#### After (Edited)")
+    if st.session_state.edited_image_data is not None:
+        st.image(st.session_state.edited_image_data, use_container_width=True)
+
+        # --- Download Button ---
+        st.download_button(
+             label="⬇️ Download Edited Photo",
+             data=st.session_state.edited_image_data,
+             file_name="edited_image.png",
+             mime="image/png"
+         )
+    else:
+        if not status_message or not status_message.startswith("Processing..."):
+             st.info("Edited image will appear here.")
+
+# ======================================================================
+# --- END: Streamlit UI ---
+# ======================================================================
+
 
 
 # ======================================================================
