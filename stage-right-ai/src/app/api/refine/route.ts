@@ -40,8 +40,8 @@ export async function POST(request: Request) {
             throw new Error("Failed to generate Access Token");
         }
 
-        // Use Gemini 3 Pro Image Preview for Conversational Editing (v1beta1)
-        const endpoint = `https://us-central1-aiplatform.googleapis.com/v1beta1/projects/${gcpProjectId}/locations/global/publishers/google/models/gemini-3-pro-image-preview:generateContent`;
+        // Use Gemini 2.5 Flash Image (Consistent with Stage API)
+        const endpoint = `https://us-central1-aiplatform.googleapis.com/v1/projects/${gcpProjectId}/locations/us-central1/publishers/google/models/gemini-2.5-flash-image:generateContent`;
 
         const fullPrompt = `${REFINE_SYSTEM_PROMPT} User Request: ${tweakPrompt}`;
 
