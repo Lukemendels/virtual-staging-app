@@ -23,7 +23,7 @@ jobs:
       STRIPE_PRICE_ID_PACK: ${{ secrets.STRIPE_PRICE_ID_PACK }}
       STRIPE_PRICE_ID_SINGLE: ${{ secrets.STRIPE_PRICE_ID_SINGLE }}
       STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
-      FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}
+      FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_STAGE_RIGHT_AI }}
 
     steps:
       - uses: actions/checkout@v4
@@ -44,7 +44,7 @@ jobs:
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: '${{ secrets.GITHUB_TOKEN }}'
-          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_KEY }}'
+          firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT_STAGE_RIGHT_AI }}'
           channelId: live
           projectId: gen-lang-client-0180739394
           entryPoint: ./stage-right-ai
