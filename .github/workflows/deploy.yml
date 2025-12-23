@@ -48,3 +48,5 @@ jobs:
           channelId: live
           projectId: gen-lang-client-0180739394
           entryPoint: ./stage-right-ai
+        env:
+          FIREBASE_CLI_EXPERIMENTS: webframeworks
