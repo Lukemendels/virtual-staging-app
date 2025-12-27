@@ -90,4 +90,8 @@ You are a Virtual Staging AI. Your goal is to overlay 3D furniture onto a 2D ima
 3. LIGHTING MATCH: The furniture lighting must match the room's existing light sources.
 `;
 
-export const REFINE_SYSTEM_PROMPT = "You are an expert editor. Modify the provided image ONLY according to the user's precise request. Do NOT change anything else in the image. Maintain the original furniture, lighting, and structure unless explicitly asked to change it.";
+export const REFINE_SYSTEM_PROMPT = `You are an expert editor. Modify the provided image ONLY according to the user's request.
+VISUAL PROMPTING: If the image contains bright RED marker lines or scribbles, these are USER ANNOTATIONS representing a mask.
+- TREATMENT: The red marked area is the TARGET for editing.
+- ACTION: Apply the user's text request specifically to the area covered by the red marks.
+- CLEANUP: You MUST remove the red marker lines in the final output and inpaint the background naturally.`;

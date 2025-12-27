@@ -1,7 +1,9 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Upload, Loader2, Sparkles, Download, Lock, Unlock, RefreshCw } from "lucide-react";
+import { Upload, Loader2, Sparkles, Download, Lock, Unlock, RefreshCw, PenLine } from "lucide-react";
+import { AnnotationCanvas } from "./AnnotationCanvas";
+import { ReactSketchCanvasRef } from "react-sketch-canvas";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/Card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -29,6 +31,10 @@ export const UploadZone = () => {
     const [editsRemaining, setEditsRemaining] = useState<number | null>(null);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Annotation State
+    const [isAnnotating, setIsAnnotating] = useState(false);
+    const canvasRef = useRef<ReactSketchCanvasRef>(null);
 
     const styles = [
         { label: "Modern Farmhouse", value: "modern_farmhouse" },
@@ -262,6 +268,19 @@ export const UploadZone = () => {
         if (!stagedImage) return;
         setLoading(true);
         try {
+            let imagePayload = stagedImage;
+
+            // If annotating, export the visual prompt
+            if (isAnnotating && canvasRef.current) {
+                // Export image with red lines baked in
+                try {
+                    const annotatedImage = await canvasRef.current.exportImage("jpeg");
+                    imagePayload = annotatedImage;
+                } catch (e) {
+                    console.error("Failed to export annotation", e);
+                }
+            }
+
             const token = await user?.getIdToken();
             const response = await fetch("/api/refine", {
                 method: "POST",
@@ -270,7 +289,7 @@ export const UploadZone = () => {
                     "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    image: stagedImage, // Use the current staged image as base
+                    image: imagePayload, // Use the (possibly annotated) image payload
                     tweakPrompt: tweakPrompt
                 }),
             });
@@ -281,6 +300,8 @@ export const UploadZone = () => {
                 toast.error(data.error);
             } else if (data.result) {
                 setStagedImage(data.result);
+                // Exit annotation mode after successful refine
+                if (isAnnotating) setIsAnnotating(false);
                 setTweakPrompt("");
                 toast.success("Scene Refined!");
             }
@@ -550,16 +571,40 @@ export const UploadZone = () => {
                                 </div>
                             </CardHeader>
                             <CardContent className="flex-1 flex items-center justify-center p-2 overflow-hidden bg-black/40 rounded-lg mx-6 border border-slate-800/50">
-                                <img
-                                    src={stagedImage}
-                                    alt="Staged"
-                                    className="w-full h-auto rounded-md"
-                                />
+                                <div className="relative w-full h-auto min-h-[50px]">
+                                    <img
+                                        src={stagedImage}
+                                        alt="Staged"
+                                        className="w-full h-auto rounded-md"
+                                    />
+                                    {isAnnotating && (
+                                        <div className="absolute inset-0 z-10">
+                                            <AnnotationCanvas
+                                                ref={canvasRef}
+                                                width="100%"
+                                                height="100%"
+                                                backgroundImage={stagedImage}
+                                                onExport={() => { }}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
                             </CardContent>
                             <CardFooter className="flex-col gap-4 p-6">
                                 {/* Director's Mode Input */}
                                 <div className="w-full space-y-2">
-                                    <label className="text-sm font-medium text-slate-300">Director Mode (Refine Scene)</label>
+                                    <div className="flex items-center justify-between">
+                                        <label className="text-sm font-medium text-slate-300">Director Mode (Refine Scene)</label>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => setIsAnnotating(!isAnnotating)}
+                                            className={`${isAnnotating ? 'bg-indigo-500/20 text-indigo-400' : 'text-slate-400 hover:text-white'} h-7 px-2`}
+                                        >
+                                            <PenLine className="w-4 h-4 mr-1.5" />
+                                            {isAnnotating ? 'Annotating...' : 'Annotate'}
+                                        </Button>
+                                    </div>
                                     <div className="flex gap-2">
                                         <Input
                                             placeholder="e.g. Make the sofa blue, add a plant in the corner..."
