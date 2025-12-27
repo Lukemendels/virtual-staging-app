@@ -108,7 +108,7 @@ export default function LandingPage() {
             <div className="hidden md:flex items-center space-x-8">
               <Link href="#how-it-works" className="text-slate-400 hover:text-white transition-colors text-sm font-medium">How it Works</Link>
               <Link href="#examples" className="text-slate-400 hover:text-white transition-colors text-sm font-medium">Before & After</Link>
-              <Link href="#pricing" className="text-slate-400 hover:text-white transition-colors text-sm font-medium">Pricing</Link>
+              <Link href="/credits" className="text-slate-400 hover:text-white transition-colors text-sm font-medium">Pricing</Link>
               <button
                 onClick={handleAuth}
                 className="text-white px-5 py-2 rounded-full border border-slate-700 bg-slate-800/50 hover:bg-indigo-600 hover:border-indigo-500 transition-all text-sm font-medium"
@@ -134,7 +134,7 @@ export default function LandingPage() {
           <div className="absolute top-full left-0 w-full bg-slate-950 border-b border-slate-800 shadow-2xl md:hidden flex flex-col p-4 space-y-4 animate-in slide-in-from-top-5">
             <Link href="#how-it-works" onClick={closeMobileMenu} className="block px-4 py-3 rounded-lg text-base font-medium text-slate-400 hover:text-white hover:bg-slate-900">How it Works</Link>
             <Link href="#examples" onClick={closeMobileMenu} className="block px-4 py-3 rounded-lg text-base font-medium text-slate-400 hover:text-white hover:bg-slate-900">Before & After</Link>
-            <Link href="#pricing" onClick={closeMobileMenu} className="block px-4 py-3 rounded-lg text-base font-medium text-slate-400 hover:text-white hover:bg-slate-900">Pricing</Link>
+            <Link href="/credits" onClick={closeMobileMenu} className="block px-4 py-3 rounded-lg text-base font-medium text-slate-400 hover:text-white hover:bg-slate-900">Pricing</Link>
             <button
               onClick={() => { closeMobileMenu(); handleAuth(); }}
               className="w-full text-center px-4 py-3 rounded-lg text-base font-bold bg-indigo-600 text-white hover:bg-indigo-500"
@@ -172,7 +172,7 @@ export default function LandingPage() {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <button
-              onClick={handleBuySingle}
+              onClick={() => router.push("/credits")}
               className="w-full sm:w-auto px-8 py-4 bg-indigo-600 text-white text-lg font-bold rounded-xl hover:bg-indigo-500 transition-all shadow-[0_0_20px_rgba(79,70,229,0.3)] hover:shadow-[0_0_30px_rgba(79,70,229,0.5)] transform hover:-translate-y-0.5 border border-indigo-500 flex items-center justify-center gap-2"
             >
               Stage a Room ($7) <ArrowRight className="w-5 h-5" />
@@ -470,7 +470,7 @@ export default function LandingPage() {
             <div>
               <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Product</h4>
               <ul className="space-y-3 text-slate-400 text-sm">
-                <li><Link href="#pricing" className="hover:text-indigo-400 transition-colors">Pricing</Link></li>
+                <li><Link href="/credits" className="hover:text-indigo-400 transition-colors">Pricing</Link></li>
                 <li><Link href="#examples" className="hover:text-indigo-400 transition-colors">Examples</Link></li>
                 <li><button onClick={handleAuth} className="hover:text-indigo-400 transition-colors text-left">Login</button></li>
               </ul>

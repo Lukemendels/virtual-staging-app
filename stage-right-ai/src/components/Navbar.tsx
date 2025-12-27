@@ -1,16 +1,18 @@
 "use client";
 
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/Button";
 import { Home, Plus, CreditCard, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { toast } from "sonner";
 
 export const Navbar = () => {
     const { user, signInWithGoogle, logout } = useAuth();
+    const router = useRouter();
     const [credits, setCredits] = useState<number | null>(null);
     const [loadingCredits, setLoadingCredits] = useState(false);
 
@@ -22,24 +24,8 @@ export const Navbar = () => {
         return () => unsub();
     }, [user]);
 
-    const handleBuyCredits = async () => {
-        setLoadingCredits(true);
-        try {
-            const response = await fetch("/api/stripe/checkout", {
-                method: "POST",
-            });
-            const { url } = await response.json();
-            if (url) {
-                window.location.href = url;
-            } else {
-                throw new Error("No checkout URL returned");
-            }
-        } catch (error) {
-            console.error("Payment failed:", error);
-            toast.error("Failed to initiate payment.");
-        } finally {
-            setLoadingCredits(false);
-        }
+    const handleBuyMore = () => {
+        router.push("/credits");
     };
 
     return (
@@ -64,10 +50,9 @@ export const Navbar = () => {
                                         size="sm"
                                         variant="ghost"
                                         className="h-7 px-2 text-indigo-400 hover:text-indigo-300 hover:bg-indigo-900/20"
-                                        onClick={handleBuyCredits}
-                                        disabled={loadingCredits}
+                                        onClick={() => router.push("/credits")}
                                     >
-                                        {loadingCredits ? <Loader2 className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3 mr-1" />}
+                                        <Plus className="w-3 h-3 mr-1" />
                                         Buy More
                                     </Button>
                                 </div>
