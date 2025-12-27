@@ -3,16 +3,19 @@ import * as admin from "firebase-admin";
 import { callVertexWithRetry } from "@/lib/vertex-utils";
 
 // 1. Initialize Firebase Admin if not already running
+// 1. Initialize Firebase Admin if not already running
 if (!admin.apps.length) {
     try {
-        let serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string;
-        if (!serviceAccountKey.trim().startsWith("{")) {
-            serviceAccountKey = Buffer.from(serviceAccountKey, "base64").toString("utf-8");
+        let serviceAccountKey = process.env.SERVICE_ACCOUNT_KEY as string;
+        if (serviceAccountKey) {
+            if (!serviceAccountKey.trim().startsWith("{")) {
+                serviceAccountKey = Buffer.from(serviceAccountKey, "base64").toString("utf-8");
+            }
+            const serviceAccount = JSON.parse(serviceAccountKey);
+            admin.initializeApp({
+                credential: admin.credential.cert(serviceAccount),
+            });
         }
-        const serviceAccount = JSON.parse(serviceAccountKey);
-        admin.initializeApp({
-            credential: admin.credential.cert(serviceAccount),
-        });
     } catch (error) {
         console.error("Firebase Admin Init Error:", error);
     }
@@ -30,7 +33,10 @@ export async function POST(request: Request) {
         const base64Image = image.replace(/^data:image\/\w+;base64,/, "");
 
         // 2. Get the Project ID and Access Token from your Service Account
-        let serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string;
+        let serviceAccountKey = process.env.SERVICE_ACCOUNT_KEY as string;
+        if (!serviceAccountKey) {
+            throw new Error("SERVICE_ACCOUNT_KEY is not defined");
+        }
         if (!serviceAccountKey.trim().startsWith("{")) {
             serviceAccountKey = Buffer.from(serviceAccountKey, "base64").toString("utf-8");
         }

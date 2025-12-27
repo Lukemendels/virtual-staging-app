@@ -9,8 +9,12 @@ async function getAccessToken() {
 }
 
 // Helper to get Project ID
+// Helper to get Project ID
 function getProjectId() {
-    let serviceAccountKey = process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string;
+    let serviceAccountKey = process.env.SERVICE_ACCOUNT_KEY as string;
+    if (!serviceAccountKey) {
+        throw new Error("SERVICE_ACCOUNT_KEY is not defined");
+    }
     if (!serviceAccountKey.trim().startsWith("{")) {
         serviceAccountKey = Buffer.from(serviceAccountKey, "base64").toString("utf-8");
     }
