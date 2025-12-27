@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Upload, Loader2, Sparkles, Download, Lock, Unlock, RefreshCw, PenLine } from "lucide-react";
 import { AnnotationCanvas } from "./AnnotationCanvas";
+import { CreditModal } from "./CreditModal";
 import { ReactSketchCanvasRef } from "react-sketch-canvas";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/Card";
@@ -35,6 +36,9 @@ export const UploadZone = () => {
     // Annotation State
     const [isAnnotating, setIsAnnotating] = useState(false);
     const canvasRef = useRef<ReactSketchCanvasRef>(null);
+
+    // Modal State
+    const [showCreditModal, setShowCreditModal] = useState(false);
 
     const styles = [
         { label: "Modern Farmhouse", value: "modern_farmhouse" },
@@ -107,8 +111,9 @@ export const UploadZone = () => {
         if (!preview || !user) return;
 
         // Optimistic check
+        // Optimistic check
         if (!projectId && credits < 1) {
-            toast.error("Insufficient credits. Please purchase more.");
+            setShowCreditModal(true);
             return;
         }
 
@@ -655,7 +660,8 @@ export const UploadZone = () => {
                     </div>
                 )}
             </div>
+
+            <CreditModal isOpen={showCreditModal} onClose={() => setShowCreditModal(false)} />
         </div>
     );
 };
-
