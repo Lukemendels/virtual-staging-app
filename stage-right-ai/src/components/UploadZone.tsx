@@ -294,8 +294,9 @@ export const UploadZone = () => {
                     "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                    image: imagePayload, // Use the (possibly annotated) image payload
-                    tweakPrompt: tweakPrompt
+                    image: imagePayload,
+                    tweakPrompt: tweakPrompt,
+                    projectId: projectId
                 }),
             });
 
@@ -305,6 +306,7 @@ export const UploadZone = () => {
                 toast.error(data.error);
             } else if (data.result) {
                 setStagedImage(data.result);
+                if (data.editsRemaining !== undefined) setEditsRemaining(data.editsRemaining);
                 // Exit annotation mode after successful refine
                 if (isAnnotating) setIsAnnotating(false);
                 setTweakPrompt("");
@@ -507,7 +509,7 @@ export const UploadZone = () => {
                                 size="lg"
                                 className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold"
                                 onClick={handleStage}
-                                disabled={loading || credits < 1}
+                                disabled={loading}
                             >
                                 {loading ? (
                                     <>
