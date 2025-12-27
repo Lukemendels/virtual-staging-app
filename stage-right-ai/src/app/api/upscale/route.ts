@@ -54,9 +54,9 @@ export async function POST(request: Request) {
         console.log("🔹 Authenticated. Requesting 4K Upscale from Vertex AI (US Central 1)...");
 
         // 3. Call the Vertex AI "Predict" Endpoint (Imagen 2 Upscaling - Stable)
-        // Model: image-generation-002
+        // Model: imagen-4.0-upscale-preview
         // Location: us-central1
-        const endpoint = `https://us-central1-aiplatform.googleapis.com/v1/projects/${projectId}/locations/us-central1/publishers/google/models/image-generation-002:predict`;
+        const endpoint = `https://us-central1-aiplatform.googleapis.com/v1/projects/${projectId}/locations/us-central1/publishers/google/models/imagen-4.0-upscale-preview:predict`;
 
         const data = await callVertexWithRetry<any>(() => fetch(endpoint, {
             method: "POST",
