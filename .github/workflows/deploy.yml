@@ -39,6 +39,8 @@ jobs:
         run: npm ci
 
       - name: Create .env file
+        env:
+          FIREBASE_SERVICE_ACCOUNT_KEY: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_STAGE_RIGHT_AI }}
         run: |
           echo "NEXT_PUBLIC_FIREBASE_API_KEY=${{ secrets.NEXT_PUBLIC_FIREBASE_API_KEY }}" >> .env
           echo "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=${{ secrets.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN }}" >> .env
@@ -53,7 +55,8 @@ jobs:
           echo "STRIPE_PRICE_ID_PACK=${{ secrets.STRIPE_PRICE_ID_PACK }}" >> .env
           echo "STRIPE_PRICE_ID_SINGLE=${{ secrets.STRIPE_PRICE_ID_SINGLE }}" >> .env
           echo "STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}" >> .env
-          echo "FIREBASE_SERVICE_ACCOUNT_KEY=${{ secrets.FIREBASE_SERVICE_ACCOUNT_STAGE_RIGHT_AI }}" >> .env
+          # Base64 encode the service account key to prevent newline issues in .env
+          echo "FIREBASE_SERVICE_ACCOUNT_KEY=$(echo -n "$FIREBASE_SERVICE_ACCOUNT_KEY" | base64 -w 0)" >> .env
 
       - name: Build
         run: npm run build
