@@ -56,7 +56,7 @@ jobs:
           echo "STRIPE_PRICE_ID_SINGLE=${{ secrets.STRIPE_PRICE_ID_SINGLE }}" >> .env
           echo "STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}" >> .env
           # Base64 encode the service account key to prevent newline issues in .env
-          echo "FIREBASE_SERVICE_ACCOUNT_KEY=$(echo -n "$FIREBASE_SERVICE_ACCOUNT_KEY" | base64 -w 0)" >> .env
+          echo "SERVICE_ACCOUNT_KEY=$(echo -n "$FIREBASE_SERVICE_ACCOUNT_KEY" | base64 -w 0)" >> .env
 
       - name: Build
         run: npm run build
