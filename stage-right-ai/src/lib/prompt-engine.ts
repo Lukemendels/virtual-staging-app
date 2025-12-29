@@ -91,26 +91,26 @@ export function buildStagingPrompt(userPrompt: string, roomType: string, style: 
         `;
     }
 
-    // --- V2: GEMINI 2.5 FLASH (The "Production Worker") ---
+    // --- V2: GEMINI 2.5 FLASH (The "Production Worker" - LEGACY MODE) ---
+    // Reverted to simple, proven prompt structure to avoid over-constraint.
     return `
-    TASK: Inpaint 3D photorealistic ${exteriorMode ? "landscaping and outdoor furniture" : "furniture"} into the empty space.
+    Role: Expert Interior Designer.
+    Task: Virtually stage this photo with photorealistic furniture.
+    Room Type: ${roomType}
+    Design Style: ${selectedStyle}
     
-    PERSPECTIVE ANCHOR:
-    - Align objects to the existing ${exteriorMode ? "ground/terrain" : "floor plane"}.
-    - Match the camera's perspective.
-    - Shadows must match existing shadows in the photo.
-
-    AESTHETIC: ${selectedStyle}
-
-    LAYOUT INSTRUCTIONS:
-    ${exteriorMode ? getV2ExteriorLayout(roomType) : getV2InteriorLayout(roomType)}
+    Instructions:
+    - Place furniture to showcase the room's best features.
+    - Ensure all items are scaled correctly to the room.
+    - Match lighting, shadows, and perspective of the original photo perfectly.
+    - ${exteriorMode ? "Focus on landscaping and outdoor furniture." : "Focus on appropriate furniture layout for this room type."}
 
     ${userPrompt ? `USER OVERRIDE: ${userPrompt}` : ""}
 
-    STRICT CONSTRAINTS:
-    - The ${exteriorMode ? "house architecture and driveway" : "room shell"} is FROZEN. Do not modify.
-    - Do not cover the camera lens.
-    - Maintain realistic scale.
+    Constraints:
+    - Do not change structural elements (walls, windows, floors).
+    - Do not cover the foreground or camera lens.
+    - Keep the room looking spacious.
     `;
 }
 
