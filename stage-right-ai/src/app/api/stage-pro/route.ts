@@ -123,8 +123,8 @@ export async function POST(request: Request) {
 
         const generationEndpoint = `https://aiplatform.googleapis.com/v1/projects/${gcpProjectId}/locations/global/publishers/google/models/gemini-3-pro-image-preview:generateContent`;
 
-        // Use the same Master Prompt logic
-        const masterPrompt = buildStagingPrompt(prompt || "", roomType || "living_room", style || "modern_farmhouse");
+        // Use the same Master Prompt logic, but with V3 Creative Mode
+        const masterPrompt = buildStagingPrompt(prompt || "", roomType || "living_room", style || "modern_farmhouse", "v3");
 
         const generationData = await callVertexWithRetry<any>(() => fetch(generationEndpoint, {
             method: "POST",

@@ -21,7 +21,7 @@ export const MARKET_TIERS: Record<string, string> = {
 // 2. PROMPT CONSTRUCTION ENGINE (SIMPLIFIED)
 // ============================================================================
 
-export function buildStagingPrompt(userPrompt: string, roomType: string, style: string): string {
+export function buildStagingPrompt(userPrompt: string, roomType: string, style: string, modelVersion: "v2" | "v3" = "v2"): string {
 
     // A. THE PRIME DIRECTIVE (Short & Punchy)
     // We use "Inpaint" terminology which Flash understands well.
@@ -35,30 +35,54 @@ export function buildStagingPrompt(userPrompt: string, roomType: string, style: 
     AESTHETIC: ${MARKET_TIERS[style] || MARKET_TIERS["modern_farmhouse"]}
     `;
 
-    // C. SIMPLE PLACEMENT (Replaces Complex Spatial Logic)
-    // Instead of "Zoning", we just say "Place X here".
+    // C. PLACEMENT GUIDE
     let placementGuide = "";
-    switch (roomType) {
-        case "basement":
-            // OLD: "Zone with 2 rugs, create media area..." (Too complex)
-            // NEW: Simple placement.
-            placementGuide = "PLACEMENT: Place a sofa and coffee table in the center of the carpet. Add a TV stand against the far wall.";
-            break;
-        case "bonus_room":
-        case "bedroom":
-            placementGuide = "PLACEMENT: Place a bed or seating area centrally. Keep low to respect ceiling height.";
-            break;
-        case "great_room":
-        case "living_room":
-            placementGuide = "PLACEMENT: Arrange a conversation area with a sofa and chairs around a central rug.";
-            break;
-        case "dining":
-        case "dining_room":
-            placementGuide = "PLACEMENT: Place a dining table and chairs in the center of the room.";
-            break;
-        default:
-            placementGuide = "PLACEMENT: Place appropriate furniture in the center of the open floor space.";
-            break;
+
+    if (modelVersion === "v3") {
+        // --- V3 PRO PROMPTS (Creative, Rich, License to think) ---
+        switch (roomType) {
+            case "basement":
+                placementGuide = "PLACEMENT: Create a fully furnished, inviting media lounge. Arrange a comfortable seating group (sectional or sofa with armchairs) oriented towards the best location for a TV/media unit. Include a coffee table, side tables, and standing lamps. Fill empty corners with large plants or decor to make the space feel complete.";
+                break;
+            case "bonus_room":
+            case "bedroom":
+                placementGuide = "PLACEMENT: Furnish as a complete, cozy bedroom suite. Place the bed on the most logical wall for the room's flow. Include nightstands with lamps, a rug under the bed, and if space permits, a small seating area or dresser. Ensure the layout feels balanced and livable.";
+                break;
+            case "great_room":
+            case "living_room":
+                placementGuide = "PLACEMENT: Design a high-end living room layout. Create a conversational seating arrangement anchored by a large area rug. Include a mix of sofas and accent chairs, a central coffee table, and varied lighting. Accessorize with plants and artwork to eliminate empty space.";
+                break;
+            case "dining":
+            case "dining_room":
+                placementGuide = "PLACEMENT: Set up a complete dining area properly scaled to the room. Center a dining table with matching chairs under the main light source or in the center of the open space. Add a sideboard or buffet if wall space allows, and accessorize with a centerpiece.";
+                break;
+            default:
+                placementGuide = "PLACEMENT: Furnish the room with a complete, optimal layout appropriate for its function. Ensure furniture is placed naturally to maximize flow and usability. Add decor, lighting, and plants to create a finished look.";
+                break;
+        }
+    } else {
+        // --- V2 FLASH PROMPTS (Rigid, Safe, High Constaint) ---
+        switch (roomType) {
+            case "basement":
+                // OLD: Simple placement.
+                placementGuide = "PLACEMENT: Place a sofa and coffee table in the center of the carpet. Add a TV stand against the far wall.";
+                break;
+            case "bonus_room":
+            case "bedroom":
+                placementGuide = "PLACEMENT: Place a bed or seating area centrally. Keep low to respect ceiling height.";
+                break;
+            case "great_room":
+            case "living_room":
+                placementGuide = "PLACEMENT: Arrange a conversation area with a sofa and chairs around a central rug.";
+                break;
+            case "dining":
+            case "dining_room":
+                placementGuide = "PLACEMENT: Place a dining table and chairs in the center of the room.";
+                break;
+            default:
+                placementGuide = "PLACEMENT: Place appropriate furniture in the center of the open floor space.";
+                break;
+        }
     }
 
     // D. USER REQUEST (Simplified)
