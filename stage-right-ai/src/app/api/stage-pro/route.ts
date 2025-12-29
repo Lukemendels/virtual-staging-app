@@ -118,16 +118,10 @@ export async function POST(request: Request) {
         const base64Image = image.replace(/^data:image\/\w+;base64,/, "");
 
         // PRO MODEL: gemini-3-pro-image-preview
-        // ENDPOINT: Global (us-central1 is usually standard)
-        // Research suggests "Gemini 3.0 Pro Image... global endpoint only". 
-        // Typically: `https://us-central1-aiplatform.googleapis.com` (Regional) vs `https://aiplatform.googleapis.com` (Global??)
-        // Or `https://{LOCATION}-aiplatform.googleapis.com`.
-        // Let's try `us-central1` first, as many "preview" models launch there.
-        // If it fails with 404/Location error, we will know.
-        // Actually, let's use the explicit `us-central1` endpoint but with the 3.0 model ID.
-        // If the user says "Global? ... separate from standard endpoint?" it implies they want the standard Vertex AI path.
+        // ENDPOINT: Global
+        // Format: https://aiplatform.googleapis.com/v1/projects/<project>/locations/global/publishers/google/models/<model>:generateContent
 
-        const generationEndpoint = `https://us-central1-aiplatform.googleapis.com/v1/projects/${gcpProjectId}/locations/us-central1/publishers/google/models/gemini-3-pro-image-preview:generateContent`;
+        const generationEndpoint = `https://aiplatform.googleapis.com/v1/projects/${gcpProjectId}/locations/global/publishers/google/models/gemini-3-pro-image-preview:generateContent`;
 
         // Use the same Master Prompt logic
         const masterPrompt = buildStagingPrompt(prompt || "", roomType || "living_room", style || "modern_farmhouse");
