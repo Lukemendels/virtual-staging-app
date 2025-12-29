@@ -1,121 +1,211 @@
 // ============================================================================
-// 1. MARKET ONTOLOGY (VISUALS ONLY)
+// prompt-engine.ts
 // ============================================================================
-// Minimized descriptions to prevent token overload.
 
+// 1. INTERIOR MARKET ONTOLOGY
+// ----------------------------------------------------------------------------
 export const MARKET_TIERS: Record<string, string> = {
-    modern_farmhouse: "Furniture Style: Modern Farmhouse. Visuals: Linen slipcovered sofas, chunky oak tables, black metal accents, cream wool rugs, eucalyptus greenery.",
-
-    historic: "Furniture Style: Transitional Historic. Visuals: Tufted velvet armchairs, mahogany chests, brass glass tables, persian rugs, oil paintings.",
-
-    luxury: "Furniture Style: Luxury Contemporary. Visuals: Low Italian leather sectionals, bouclé chairs, stone tables, minimalist sculpture.",
-
-    industrial: "Furniture Style: Industrial Chic. Visuals: Cognac leather sofas, steel shelving, reclaimed wood tables, cowhide rugs.",
-
-    scandi: "Furniture Style: Scandi-Minimalist. Visuals: Light ash wood, grey fabric sofas, nesting tables, geometric wool rugs.",
-
-    accessible: "Furniture Style: Transitional. Visuals: Grey sofas, sturdy wood tables, blue and white pillows, soft rugs."
+    modern_farmhouse:
+        "Style: Modern Farmhouse. Textures: Matte black metal, raw oak wood grain, heavy linen fabrics, chunky knit throws. Vibe: Airy, organic, high-contrast neutrals. Lighting interaction: Soft diffusion.",
+    historic:
+        "Style: Transitional Historic. Textures: Aged mahogany, tufted velvet (sheen), brass accents (reflective), persian wool rugs. Vibe: Stately, collected, warm richness. Lighting interaction: Warm tungsten highlights.",
+    luxury:
+        "Style: Luxury Contemporary. Textures: Italian boucle fabric, travertine stone (porous), polished chrome, low-profile leather. Vibe: Gallery-like, expensive, curated. Lighting interaction: High contrast shadows.",
+    industrial:
+        "Style: Industrial Loft. Textures: Distressed cognac leather, cold rolled steel, reclaimed rough-sawn wood, cowhide. Vibe: Masculine, raw, structural. Lighting interaction: Moody, directional.",
+    scandi:
+        "Style: Scandi-Minimalist. Textures: Blonde ash wood, matte grey felt, sheepskin, ceramics. Vibe: Hygge, clean lines, functional. Lighting interaction: Bright, even wash.",
+    accessible:
+        "Style: Transitional Real Estate Standard. Textures: Durable grey tweed, espresso wood finish, glass surfaces, plush neutral rugs. Vibe: Safe, inviting, open. Lighting interaction: Neutral balanced."
 };
 
-// ============================================================================
-// 2. PROMPT CONSTRUCTION ENGINE (SIMPLIFIED)
-// ============================================================================
+// 2. EXTERIOR LANDSCAPING ONTOLOGY (NEW)
+// ----------------------------------------------------------------------------
+export const EXTERIOR_TIERS: Record<string, string> = {
+    curb_appeal:
+        "Style: Real Estate Curb Appeal. Visuals: Freshly mulched flower beds, vibrant green lawn (striping), blooming hydrangeas, potted boxwoods by the door. Vibe: Welcoming, manicured, clean.",
+    modern_zen:
+        "Style: Modern Xeriscape/Zen. Visuals: Concrete pavers with river rock gaps, ornamental grasses, bamboo, architectural agave plants, slate gray planters. Vibe: Low-maintenance, architectural, calm.",
+    resort_luxury:
+        "Style: Backyard Resort. Visuals: Teak lounge chairs with white cushions, blue pool water, stone fire pit, string lights, tropical palms or privacy hedges. Vibe: Vacation, expensive, entertaining.",
+    english_garden:
+        "Style: Cottage Garden. Visuals: Wildflowers, climbing roses on trellises, winding brick paths, wrought iron benches, lush overgrowth. Vibe: Romantic, organic, timeless.",
+    suburban_patio:
+        "Style: Family Patio. Visuals: Dining set with umbrella, BBQ grill area, durable outdoor rug, play area background, neat shrubbery. Vibe: Functional, family-friendly, social."
+};
+
+// 3. UTILITIES
+// ----------------------------------------------------------------------------
+const EXTERIOR_TYPES = ["front_yard", "backyard", "patio", "deck", "pool", "terrace", "balcony", "garden", "exterior"]; // Added "exterior" as a catch-all
+
+function isExterior(roomType: string): boolean {
+    return EXTERIOR_TYPES.includes(roomType.toLowerCase());
+}
+
+// 4. PROMPT CONSTRUCTION ENGINE
+// ----------------------------------------------------------------------------
 
 export function buildStagingPrompt(userPrompt: string, roomType: string, style: string, modelVersion: "v2" | "v3" = "v2"): string {
 
-    // A. THE PRIME DIRECTIVE (Short & Punchy)
-    // We use "Inpaint" terminology which Flash understands well.
-    const coreTask = `
-    TASK: Inpaint realistic 3D furniture into the empty floor space of this room.
-    CONSTRAINT: The existing walls, ceiling, windows, and flooring are FROZEN. Do not change them.
-    `;
+    // A. Detect Context (Interior vs Exterior)
+    const exteriorMode = isExterior(roomType);
 
-    // B. VISUAL STYLE
-    const visualStyle = `
-    AESTHETIC: ${MARKET_TIERS[style] || MARKET_TIERS["modern_farmhouse"]}
-    `;
-
-    // C. PLACEMENT GUIDE
-    let placementGuide = "";
-
-    if (modelVersion === "v3") {
-        // --- V3 PRO PROMPTS (Creative, Rich, License to think) ---
-        switch (roomType) {
-            case "basement":
-                placementGuide = "PLACEMENT: Create a fully furnished, inviting media lounge. Arrange a comfortable seating group (sectional or sofa with armchairs) oriented towards the best location for a TV/media unit. Include a coffee table, side tables, and standing lamps. Fill empty corners with large plants or decor to make the space feel complete.";
-                break;
-            case "bonus_room":
-            case "bedroom":
-                placementGuide = "PLACEMENT: Furnish as a complete, cozy bedroom suite. Place the bed on the most logical wall for the room's flow. Include nightstands with lamps, a rug under the bed, and if space permits, a small seating area or dresser. Ensure the layout feels balanced and livable.";
-                break;
-            case "great_room":
-            case "living_room":
-                placementGuide = "PLACEMENT: Design a high-end living room layout. Create a conversational seating arrangement anchored by a large area rug. Include a mix of sofas and accent chairs, a central coffee table, and varied lighting. Accessorize with plants and artwork to eliminate empty space.";
-                break;
-            case "dining":
-            case "dining_room":
-                placementGuide = "PLACEMENT: Set up a complete dining area properly scaled to the room. Center a dining table with matching chairs under the main light source or in the center of the open space. Add a sideboard or buffet if wall space allows, and accessorize with a centerpiece.";
-                break;
-            default:
-                placementGuide = "PLACEMENT: Furnish the room with a complete, optimal layout appropriate for its function. Ensure furniture is placed naturally to maximize flow and usability. Add decor, lighting, and plants to create a finished look.";
-                break;
-        }
+    // B. Select correct ontology
+    // If exterior mode, try to find the style in EXTERIOR_TIERS, fallback to CURB APPEAL.
+    // If interior mode, try to find in MARKET_TIERS, fallback to FARMHOUSE.
+    let selectedStyle = "";
+    if (exteriorMode) {
+        selectedStyle = EXTERIOR_TIERS[style] || EXTERIOR_TIERS["curb_appeal"];
     } else {
-        // --- V2 FLASH PROMPTS (Rigid, Safe, High Constaint) ---
-        switch (roomType) {
-            case "basement":
-                // OLD: Simple placement.
-                placementGuide = "PLACEMENT: Place a sofa and coffee table in the center of the carpet. Add a TV stand against the far wall.";
-                break;
-            case "bonus_room":
-            case "bedroom":
-                placementGuide = "PLACEMENT: Place a bed or seating area centrally. Keep low to respect ceiling height.";
-                break;
-            case "great_room":
-            case "living_room":
-                placementGuide = "PLACEMENT: Arrange a conversation area with a sofa and chairs around a central rug.";
-                break;
-            case "dining":
-            case "dining_room":
-                placementGuide = "PLACEMENT: Place a dining table and chairs in the center of the room.";
-                break;
-            default:
-                placementGuide = "PLACEMENT: Place appropriate furniture in the center of the open floor space.";
-                break;
-        }
+        selectedStyle = MARKET_TIERS[style] || MARKET_TIERS["modern_farmhouse"];
     }
 
-    // D. USER REQUEST (Simplified)
-    const userRequest = userPrompt ? `USER NOTE: Include ${userPrompt} if it fits naturally.` : "";
+    // --- V3: GEMINI 3 PRO (The "Expert Designer") ---
+    if (modelVersion === "v3") {
+        return `
+        ROLE: You are an expert ${exteriorMode ? "Landscape Architect and Exterior Designer" : "Interior Architect and Feng Shui Consultant"}.
+        GOAL: ${exteriorMode ? "Enhance curb appeal and outdoor living potential." : "Stage this room to maximize 'Buyer Emotional Safety' and spatial flow."}
 
-    // E. NEGATIVE PROMPT (The "Don't" List)
-    // We combine the guardrails into a single negative prompt block which models often process better as a stop-list.
-    const constraints = `
-    STRICT NEGATIVE CONSTRAINTS:
-    - NO removing or moving walls, bulkheads, or soffits.
-    - NO changing the ceiling grid or flooring material.
-    - NO changing windows or views.
-    - NO construction or remodeling.
-    - NO new room geometry.
+        1. LIGHTING & PHYSICS (The Realism Layer):
+           - ${exteriorMode ? "SUN DIRECTION: Match the sun angle and cast hard shadows from trees/structures." : "Anchor furniture with ambient occlusion shadows."}
+           - ${exteriorMode ? "FOLIAGE: Plants must look organic and interact with the wind/gravity (no stiff models)." : "Match the color temperature of the existing light."}
+           - Respect the ${exteriorMode ? "ground plane/terrain" : "floor plane"} and vanishing points absolutely.
+
+        2. SPATIAL PSYCHOLOGY (${exteriorMode ? "Curb Appeal" : "Feng Shui"}):
+           ${exteriorMode ? getExteriorPsychology(roomType) : getInteriorPsychology()}
+
+        3. AESTHETIC & TEXTURE:
+           ${selectedStyle}
+
+        4. LAYOUT SPECIFICS:
+           ${exteriorMode ? getV3ExteriorLayout(roomType) : getV3InteriorLayout(roomType)}
+
+        5. USER OVERRIDE:
+           ${userPrompt ? `CRITICAL INSTRUCTION: ${userPrompt}` : "Optimize for a high-value real estate listing."}
+
+        NEGATIVE CONSTRAINTS (STRICT):
+        - NO blocking the ${exteriorMode ? "front door, driveway, or windows" : "camera view"}.
+        - NO floating objects.
+        - NO ${exteriorMode ? "changing the house structure, siding, or roof" : "structural changes to walls or ceiling"}.
+        - ${exteriorMode ? "NO dead plants or brown grass." : "NO clutter."}
+        `;
+    }
+
+    // --- V2: GEMINI 2.5 FLASH (The "Production Worker") ---
+    return `
+    TASK: Inpaint 3D photorealistic ${exteriorMode ? "landscaping and outdoor furniture" : "furniture"} into the empty space.
+    
+    PERSPECTIVE ANCHOR:
+    - Align objects to the existing ${exteriorMode ? "ground/terrain" : "floor plane"}.
+    - Match the camera's perspective.
+    - Shadows must match existing shadows in the photo.
+
+    AESTHETIC: ${selectedStyle}
+
+    LAYOUT INSTRUCTIONS:
+    ${exteriorMode ? getV2ExteriorLayout(roomType) : getV2InteriorLayout(roomType)}
+
+    ${userPrompt ? `USER OVERRIDE: ${userPrompt}` : ""}
+
+    STRICT CONSTRAINTS:
+    - The ${exteriorMode ? "house architecture and driveway" : "room shell"} is FROZEN. Do not modify.
+    - Do not cover the camera lens.
+    - Maintain realistic scale.
     `;
-
-    return `${coreTask}\n${visualStyle}\n${placementGuide}\n${userRequest}\n${constraints}`;
 }
 
-// ============================================================================
-// 3. SYSTEM PROMPT (The "Constitution")
-// ============================================================================
-// We keep this high-level but cleaner.
+// 5. HELPER FUNCTIONS (LAYOUT & PSYCHOLOGY)
+// ----------------------------------------------------------------------------
+
+function getInteriorPsychology(): string {
+    return `
+    - COMMAND POSITION: The primary furniture must face the entry or focal point.
+    - CHI FLOW: Maintain wide, clear walking paths.
+    - BALANCE: Balance visual weight across the image.
+    `;
+}
+
+function getExteriorPsychology(roomType: string): string {
+    if (roomType === "front_yard") {
+        return `
+        - WELCOMING ENTRY: Lead the eye to the front door. Use plants to frame the entrance, not block it.
+        - CLEAN LINES: Ensure edging between grass and beds is sharp.
+        `;
+    }
+    return `
+    - OUTDOOR LIVING: Create distinct zones for sitting vs. playing.
+    - PRIVACY: Use tall plants or hedges to screen unsightly background elements if necessary.
+    `;
+}
+
+function getV3InteriorLayout(roomType: string): string {
+    switch (roomType) {
+        case "living_room":
+        case "great_room":
+            return "LAYOUT: Create a 'Social Circle'. Orient the sofa in the Command Position. Anchor with a large rug.";
+        case "bedroom":
+        case "master_bedroom":
+            return "LAYOUT: Place bed on the 'Power Wall' (opposite door). Avoid 'Coffin Position'. Use matching nightstands.";
+        case "dining":
+        case "dining_room":
+            return "LAYOUT: Center the table. Ensure chairs are pulled out slightly. Use a round table if square room.";
+        case "home_office":
+            return "LAYOUT: Desk in Command Position. Chair backing a solid wall.";
+        case "basement":
+            return "LAYOUT: Media Lounge configuration. Comfortable sectional facing the best TV wall. Add warmth with rugs and lighting.";
+        default:
+            return "LAYOUT: Open center, active corners with light/plants.";
+    }
+}
+
+function getV3ExteriorLayout(roomType: string): string {
+    switch (roomType) {
+        case "front_yard":
+            return "LAYOUT: Enhance the foundation planting. Add symmetry with matching planters by the door. Ensure the driveway is clear. Green up the lawn.";
+        case "backyard":
+        case "patio":
+        case "deck":
+            return "LAYOUT: Create a conversation area. Place outdoor sofas/chairs on the patio surface. If there is a lawn, define the edge with a flower bed.";
+        case "pool":
+            return "LAYOUT: Resort style. Place lounge chairs in pairs with small side tables. Add rolled towels. Ensure safety clearance around the water edge.";
+        case "balcony":
+        case "terrace":
+            return "LAYOUT: Bistro style. Small table and two chairs angled toward the view. Potted plant in the corner.";
+        default:
+            return "LAYOUT: clean up the landscaping, add fresh mulch, and place appropriate outdoor seating if space allows.";
+    }
+}
+
+function getV2InteriorLayout(roomType: string): string {
+    // Simplified instructions for Flash
+    return "Place appropriate furniture in the center. Ensure realistic scaling.";
+}
+
+function getV2ExteriorLayout(roomType: string): string {
+    // Simplified instructions for Flash
+    return "Add green grass, clean landscaping beds, and appropriate outdoor furniture if a patio exists.";
+}
+
+// 6. SYSTEM PROMPTS
+// ----------------------------------------------------------------------------
 
 export const SYSTEM_PROMPT = `
-You are a Virtual Staging AI. Your goal is to overlay 3D furniture onto a 2D image.
-1. PRESERVE GEOMETRY: You must treat the input image as a fixed background. Never alter the structural lines (walls, ceiling, floor edges).
-2. REALISTIC SCALE: Furniture must be sized correctly for the room. If the room is small, use smaller furniture.
-3. LIGHTING MATCH: The furniture lighting must match the room's existing light sources.
+You are a Real Estate Visualization Engine. 
+INPUT: An image of a space (Interior or Exterior).
+OUTPUT: The same image with photorealistic 3D elements superimposed.
+
+CORE PHYSICS RULES:
+1. LIGHT TRANSPORT: Match direction/intensity of original light (Sun or Artificial).
+2. CONTACT SHADOWS: Objects touching the ground must have ambient occlusion shadows.
+3. PRESERVATION: Do not remove structural elements (Walls, Roofs, Driveways, Siding).
 `;
 
-export const REFINE_SYSTEM_PROMPT = `You are an expert editor. Modify the provided image ONLY according to the user's request.
-VISUAL PROMPTING: If the image contains bright RED marker lines or scribbles, these are USER ANNOTATIONS representing a mask.
-- TREATMENT: The red marked area is the TARGET for editing.
-- ACTION: Apply the user's text request specifically to the area covered by the red marks.
-- CLEANUP: You MUST remove the red marker lines in the final output and inpaint the background naturally.`;
+export const REFINE_SYSTEM_PROMPT = `
+You are a Precision Image Editor.
+INPUT: An image containing RED scribbles/lines.
+TASK: Inpaint the area defined by the RED lines based on the user's text prompt.
+RULES:
+1. THE RED MASK: The red lines indicate exactly where the change must happen.
+2. BLENDING: Seamlessly blend into the environment.
+3. REMOVAL: The red lines must be removed in the final output.
+`;

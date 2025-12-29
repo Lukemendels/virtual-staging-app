@@ -55,7 +55,11 @@ export const UploadZone = () => {
         { label: "Kitchen", value: "kitchen" },
         { label: "Basement / Rec Room", value: "basement" },
         { label: "Bonus Room / FROG", value: "bonus_room" },
-        { label: "Exterior / Curb Appeal", value: "exterior" }
+        { label: "Front Yard (Curb Appeal)", value: "front_yard" },
+        { label: "Backyard / Garden", value: "backyard" },
+        { label: "Patio / Deck", value: "patio" },
+        { label: "Pool Area", value: "pool" },
+        { label: "Balcony / Terrace", value: "balcony" }
     ];
 
     // Listen to real-time credit updates
