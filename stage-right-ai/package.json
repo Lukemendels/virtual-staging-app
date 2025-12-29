@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test:logic": "ts-node -O \"{\\\"module\\\":\\\"commonjs\\\"}\" debug-prompts.ts"
+    "test:logic": "ts-node -O \"{\\\"module\\\":\\\"commonjs\\\"}\" debug-prompts.ts",
+    "test:visual": "ts-node -O \"{\\\"module\\\":\\\"commonjs\\\"}\" generate-local.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
@@ -32,6 +33,7 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@google-cloud/vertexai": "^1.10.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

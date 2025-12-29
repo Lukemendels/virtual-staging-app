@@ -42,3 +42,8 @@ next-env.d.ts
 
 # firebase
 .firebase/
+
+# Local Test Assets
+local-test-assets/*
+test_output_utf8.txt
+
