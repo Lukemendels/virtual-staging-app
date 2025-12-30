@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { App } from "firebase-admin/app"; // Import App type specifically
 import * as admin from "firebase-admin";
 import { db, initFirebaseAdmin } from "@/lib/firebase-admin";
 import { getAuth } from "firebase-admin/auth";
@@ -7,7 +8,7 @@ import { buildStagingPrompt, SYSTEM_PROMPT } from "@/lib/prompt-engine";
 import { verifyStagingResult } from "@/lib/verification-engine";
 
 // Helper to get Access Token
-async function getAccessToken(app: admin.app.App) {
+async function getAccessToken(app: App) {
     const accessTokenObj = await app.options.credential?.getAccessToken();
     return accessTokenObj?.access_token;
 }
