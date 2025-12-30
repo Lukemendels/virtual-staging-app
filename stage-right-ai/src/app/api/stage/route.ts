@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import * as admin from "firebase-admin";
-import { db } from "@/lib/firebase-admin";
+import { db, initFirebaseAdmin } from "@/lib/firebase-admin";
 import { getAuth } from "firebase-admin/auth";
 import { callVertexWithRetry } from "@/lib/vertex-utils";
 import { buildStagingPrompt, SYSTEM_PROMPT } from "@/lib/prompt-engine";
@@ -27,6 +27,9 @@ function getProjectId() {
 
 export async function POST(request: Request) {
     try {
+        // Force initialization check
+        initFirebaseAdmin();
+
         // 1. Authenticate User
         const authHeader = request.headers.get("Authorization");
         if (!authHeader?.startsWith("Bearer ")) {
