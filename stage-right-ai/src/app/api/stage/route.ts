@@ -41,7 +41,8 @@ export async function POST(request: Request) {
         const idToken = authHeader.split("Bearer ")[1];
         console.log("[Stage V3 API] Verifying ID token...");
         const decodedToken = await getAuth(app).verifyIdToken(idToken);
-        const userId = decodedToken.uid;
+        // Move userId and deductCredit to outer scope for reliable catch-block access
+        var userId = decodedToken.uid;
 
         const { image, style, roomType, projectId, prompt, isRetry } = await request.json();
 
@@ -50,11 +51,11 @@ export async function POST(request: Request) {
         }
 
         // 2. Credit / Edit Logic
-        let finalProjectId = projectId;
+        var finalProjectId = projectId;
         let newEditsRemaining = 0;
 
         // Only deduct credit if this is NOT an automated retry
-        const deductCredit = !isRetry;
+        var deductCredit = !isRetry;
 
         if (deductCredit) {
             const dbInstance = getFirestore(app);
@@ -205,6 +206,43 @@ export async function POST(request: Request) {
 
     } catch (error: any) {
         console.error("Stage API Error:", error);
+
+        // --- SAFETY NET: REFUND CREDIT ---
+        // If we dedicated a credit/edit but failed to deliver (Timeout/503), refund it.
+        const app = initFirebaseAdmin(); // Re-grab app just in case (cheap)
+        if (app && userId && deductCredit) {
+            try {
+                const dbInstance = getFirestore(app);
+                await dbInstance.runTransaction(async (transaction) => {
+                    if (projectId) {
+                        // Existing Project: Refund +1 Edit
+                        const projectRef = dbInstance.collection("projects").doc(projectId);
+                        const pDoc = await transaction.get(projectRef);
+                        if (pDoc.exists) {
+                            const current = pDoc.data()?.edits_remaining || 0;
+                            transaction.update(projectRef, { edits_remaining: current + 1 });
+                            console.log(`[Safety Net] Refunded 1 edit to project ${projectId}`);
+                        }
+                    } else if (finalProjectId) {
+                        // New Project: Refund +1 Credit to User
+                        // Note: If we created a project doc (finalProjectId), we technically leave a "glitch" empty project.
+                        // But more importantly, we must restore the user's credit balance.
+                        const userRef = dbInstance.collection("users").doc(userId);
+                        const uDoc = await transaction.get(userRef);
+                        if (uDoc.exists) {
+                            const current = uDoc.data()?.credits || 0;
+                            transaction.update(userRef, { credits: current + 1 });
+                            console.log(`[Safety Net] Refunded 1 credit to user ${userId}`);
+                        }
+                    }
+                });
+            } catch (refundError) {
+                console.error("[Safety Net] Refund Failed!", refundError);
+                // System Alert: Critical Failure (Money lost)
+            }
+        }
+        // ----------------------------------
+
         return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
     }
 }
