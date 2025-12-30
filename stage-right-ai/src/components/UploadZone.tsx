@@ -41,6 +41,7 @@ export const UploadZone = () => {
     const [showCreditModal, setShowCreditModal] = useState(false);
     const [isPaid, setIsPaid] = useState(false);
     const [tweakPrompt, setTweakPrompt] = useState("");
+    const [fileName, setFileName] = useState("");
 
     // Check for payment success
     useEffect(() => {
