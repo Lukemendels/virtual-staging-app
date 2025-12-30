@@ -23,7 +23,7 @@ if (!admin.apps.length) {
 
 export async function POST(request: Request) {
     try {
-        const { image } = await request.json();
+        const { image, upscaleFactor = "x2" } = await request.json();
 
         if (!image) {
             return NextResponse.json({ error: "Image is required" }, { status: 400 });
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
             throw new Error("Failed to generate Access Token from Service Account.");
         }
 
-        console.log("🔹 Authenticated. Requesting 4K Upscale from Vertex AI (US Central 1)...");
+        console.log(`🔹 Authenticated. Requesting ${upscaleFactor} Upscale from Vertex AI...`);
 
         // 3. Call the Vertex AI "Predict" Endpoint (Imagen 2 Upscaling - Stable)
         // Model: imagen-4.0-upscale-preview
@@ -75,7 +75,7 @@ export async function POST(request: Request) {
                 parameters: {
                     mode: "upscale",
                     upscaleConfig: {
-                        upscaleFactor: "x2", // 2K -> 4K
+                        upscaleFactor: upscaleFactor, // Dynamic: x2 or x4
                     },
                 },
             }),

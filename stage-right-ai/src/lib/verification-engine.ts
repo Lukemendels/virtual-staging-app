@@ -29,6 +29,8 @@ export async function verifyStagingResult(
         2. STRUCTURAL DAMAGE: Did the AI remove existing walls, windows, or change the floor material?
         3. BAD PERSPECTIVE: Does the furniture look like it's pasted flat?
         4. OBSTRUCTION: Is the camera view blocked by a large object?
+        5. BLOCKED ACCESS (CRITICAL): Is the seating area accessible? Are paths blocked by sofas or tables?
+        6. LOGICAL ORIENTATION (FENG SHUI): Is furniture facing the wrong way? (e.g. Sofa facing wall instead of TV/View). Rugs must align with furniture.
 
         OUTPUT FORMAT:
         Return a JSON object: { "pass": boolean, "reason": "short explanation" }

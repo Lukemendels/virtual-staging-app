@@ -42,7 +42,7 @@ export function buildStagingPrompt(userPrompt: string, roomType: string, style: 
         // --- V3 PRO PROMPTS (Creative, Rich, License to think) ---
         switch (roomType) {
             case "basement":
-                placementGuide = "PLACEMENT: Create a fully furnished, inviting media lounge. Arrange a comfortable seating group (sectional or sofa with armchairs) oriented towards the best location for a TV/media unit. Include a coffee table, side tables, and standing lamps. Fill empty corners with large plants or decor to make the space feel complete.";
+                placementGuide = "PLACEMENT: Create a fully furnished media lounge. Orient the main seating group (sectional/sofa) to face the TV wall, but ENSURE the back of the sofa does not block the entrance to the room. Leave a clear walkway. Include a coffee table, side tables, and standing lamps.";
                 break;
             case "bonus_room":
             case "bedroom":
@@ -57,7 +57,7 @@ export function buildStagingPrompt(userPrompt: string, roomType: string, style: 
                 placementGuide = "PLACEMENT: Set up a complete dining area properly scaled to the room. Center a dining table with matching chairs under the main light source or in the center of the open space. Add a sideboard or buffet if wall space allows, and accessorize with a centerpiece.";
                 break;
             default:
-                placementGuide = "PLACEMENT: Furnish the room with a complete, optimal layout appropriate for its function. Ensure furniture is placed naturally to maximize flow and usability. Add decor, lighting, and plants to create a finished look.";
+                placementGuide = "PLACEMENT: Furnish the room with a complete, optimal layout. CRITICAL: Ensure clear walking paths (traffic flow) into and through the room. Do not block entryways with backs of sofas or large furniture. Orient seating towards the logical focal point.";
                 break;
         }
     } else {

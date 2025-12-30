@@ -184,6 +184,9 @@ export const UploadZone = () => {
                 setProjectId(data.projectId);
                 setEditsRemaining(data.editsRemaining);
 
+                // Set default filename
+                setFileName(`${selectedRoomType}-${selectedStyle}`);
+
                 if (data.verification) {
                     console.log("Verification passed:", data.verification);
                 }
@@ -223,7 +226,7 @@ export const UploadZone = () => {
         }
     };
 
-    const handleUpscaleAndDownload = async () => {
+    const handleUpscaleAndDownload = async (factor: "x2" | "x4") => {
         if (!stagedImage) return;
 
         setLoading(true);
@@ -232,7 +235,10 @@ export const UploadZone = () => {
             const response = await fetch("/api/upscale", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ image: stagedImage }),
+                body: JSON.stringify({
+                    image: stagedImage,
+                    upscaleFactor: factor
+                }),
             });
 
             const data = await response.json();
@@ -252,16 +258,19 @@ export const UploadZone = () => {
             if (data.result && data.result.startsWith("data:image")) {
                 finalImage = data.result;
                 setStagedImage(finalImage);
-                toast.success("Image upscaled to 4K!");
+                // toast.success("Image upscaled!"); 
+                // Don't toast success yet, wait for download
             }
 
             // 2. Download
             const link = document.createElement("a");
             link.href = finalImage;
-            link.download = "staged-room-4k.jpg";
+            link.download = `${fileName || "staged-room"}${factor === "x4" ? "-4k" : "-mls"}.jpg`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+
+            toast.success("Download started!");
 
         } catch (error) {
             console.error("Upscaling error:", error);
@@ -385,10 +394,37 @@ export const UploadZone = () => {
                                 <img src={stagedImage} alt="Staged" className="w-full h-auto rounded-md" />
                             </CardContent>
                             <CardFooter className="flex-col gap-4 p-6">
-                                {/* Download / Upscale Only - No More Edit */}
-                                <Button className="w-full transition-all text-white font-semibold bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 shadow-lg shadow-indigo-500/20" onClick={handleUpscaleAndDownload} disabled={loading} size="lg">
-                                    {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Processing...</> : <><Download className="mr-2 h-4 w-4" /> Upscale to 4K & Download</>}
-                                </Button>
+                                {/* File Name Input */}
+                                <div className="w-full space-y-2">
+                                    <label className="text-sm font-medium text-slate-300">File Name</label>
+                                    <Input
+                                        value={fileName}
+                                        onChange={(e) => setFileName(e.target.value)}
+                                        className="bg-slate-900 border-slate-700 text-white"
+                                        placeholder="e.g. Living-Room-Draft-1"
+                                    />
+                                </div>
+
+                                {/* Dual Download Buttons */}
+                                <div className="grid grid-cols-2 gap-3 w-full pt-2">
+                                    <Button
+                                        className="w-full bg-slate-800 hover:bg-slate-700 text-white border border-slate-700"
+                                        onClick={() => handleUpscaleAndDownload("x2")}
+                                        disabled={loading}
+                                    >
+                                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                                        MLS Optimized
+                                    </Button>
+
+                                    <Button
+                                        className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-lg shadow-indigo-500/20"
+                                        onClick={() => handleUpscaleAndDownload("x4")}
+                                        disabled={loading}
+                                    >
+                                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                                        Download 4K
+                                    </Button>
+                                </div>
                             </CardFooter>
                         </Card>
                     </div>
