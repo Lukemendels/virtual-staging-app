@@ -39,6 +39,24 @@ export const UploadZone = () => {
 
     // Modal State
     const [showCreditModal, setShowCreditModal] = useState(false);
+    const [isPaid, setIsPaid] = useState(false);
+
+    // Check for payment success
+    useEffect(() => {
+        const query = new URLSearchParams(window.location.search);
+        if (query.get("payment") === "success") {
+            setIsPaid(true);
+            const pStage = localStorage.getItem("pendingStage");
+            const pPreview = localStorage.getItem("pendingPreview");
+            if (pStage && pPreview) {
+                setStagedImage(pStage);
+                setPreview(pPreview);
+                localStorage.removeItem("pendingStage");
+                localStorage.removeItem("pendingPreview");
+            }
+            toast.success("Payment successful! 4K Upscaling unlocked.");
+        }
+    }, []);
 
     const styles = [
         { label: "Modern Farmhouse", value: "modern_farmhouse" },
@@ -187,10 +205,70 @@ export const UploadZone = () => {
         }
     };
 
-    const handleUnlock = async () => { /* ... existing ... */ };
+    const handleUnlock = async () => {
+        if (!stagedImage || !preview) return;
+        setLoading(true);
+        try {
+            localStorage.setItem("pendingStage", stagedImage);
+            localStorage.setItem("pendingPreview", preview);
+            const response = await fetch("/api/stripe/checkout", { method: "POST" });
+            const { url } = await response.json();
+            if (url) window.location.href = url;
+            else throw new Error("No URL");
+        } catch (error) {
+            console.error("Payment failed:", error);
+            toast.error("Failed to initiate payment.");
+            setLoading(false);
+        }
+    };
 
-    // ... (Upscale logic remains) ...
-    const handleUpscaleAndDownload = async () => { /* ... existing ... */ };
+    const handleUpscaleAndDownload = async () => {
+        if (!stagedImage) return;
+
+        setLoading(true);
+        try {
+            // 1. Upscale
+            const response = await fetch("/api/upscale", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ image: stagedImage }),
+            });
+
+            const data = await response.json();
+
+            if (response.status === 429 || response.status === 503) {
+                toast.error("High traffic. Retrying... please wait.");
+                return;
+            }
+
+            if (data.error) {
+                console.error("Upscaling failed:", data.error);
+                toast.error("Failed to upscale image.");
+                return;
+            }
+
+            let finalImage = stagedImage;
+            if (data.result && data.result.startsWith("data:image")) {
+                finalImage = data.result;
+                setStagedImage(finalImage);
+                toast.success("Image upscaled to 4K!");
+            }
+
+            // 2. Download
+            const link = document.createElement("a");
+            link.href = finalImage;
+            link.download = "staged-room-4k.jpg";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+        } catch (error) {
+            console.error("Upscaling error:", error);
+            toast.error("Connection error.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <div className="w-full max-w-6xl mx-auto space-y-8 p-6">
