@@ -41,11 +41,6 @@ export const Navbar = () => {
                 <div className="flex items-center gap-4">
                     {user ? (
                         <div className="flex items-center gap-4">
-                            <Link href="/pro-model-preview" className="hidden md:flex items-center gap-1 text-xs font-bold text-indigo-400 bg-indigo-400/10 px-2 py-1 rounded-full hover:bg-indigo-400/20 transition-colors border border-indigo-500/20">
-                                <Sparkles className="w-3 h-3" />
-                                Pro Preview
-                            </Link>
-
                             {credits !== null && (
                                 <div className="hidden md:flex items-center gap-3 bg-slate-900/50 px-3 py-1.5 rounded-full border border-slate-800">
                                     <span className="text-sm font-medium text-slate-400">
