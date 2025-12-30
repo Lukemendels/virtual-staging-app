@@ -5,8 +5,9 @@ import { callVertexWithRetry } from "@/lib/vertex-utils";
 
 export async function POST(request: Request) {
     try {
-        // Force initialization check
-        initFirebaseAdmin();
+        // Force initialization check and get App
+        const app = initFirebaseAdmin();
+        if (!app) throw new Error("Firebase Admin failed to initialize");
 
         const { image, upscaleFactor = "x2" } = await request.json();
 
@@ -28,8 +29,9 @@ export async function POST(request: Request) {
         const serviceAccount = JSON.parse(serviceAccountKey);
         const projectId = serviceAccount.project_id;
 
-        // Get a fresh OAuth2 token
-        const accessTokenObj = await admin.app().options.credential?.getAccessToken();
+        // Get a fresh OAuth2 token using the specific App instance
+        // Note: admin.app() relies on default, but app.options.credential is explicit
+        const accessTokenObj = await app.options.credential?.getAccessToken();
         const accessToken = accessTokenObj?.access_token;
 
         if (!accessToken) {

@@ -7,28 +7,18 @@ import { buildStagingPrompt, SYSTEM_PROMPT } from "@/lib/prompt-engine";
 import { verifyStagingResult } from "@/lib/verification-engine";
 
 // Helper to get Access Token
-async function getAccessToken() {
-    const accessTokenObj = await admin.app().options.credential?.getAccessToken();
+async function getAccessToken(app: admin.app.App) {
+    const accessTokenObj = await app.options.credential?.getAccessToken();
     return accessTokenObj?.access_token;
 }
 
-// Helper to get Project ID
-function getProjectId() {
-    let serviceAccountKey = process.env.SERVICE_ACCOUNT_KEY as string;
-    if (!serviceAccountKey) {
-        throw new Error("SERVICE_ACCOUNT_KEY is not defined");
-    }
-    if (!serviceAccountKey.trim().startsWith("{")) {
-        serviceAccountKey = Buffer.from(serviceAccountKey, "base64").toString("utf-8");
-    }
-    const serviceAccount = JSON.parse(serviceAccountKey);
-    return serviceAccount.project_id;
-}
+// ... (getProjectId remains same)
 
 export async function POST(request: Request) {
     try {
         // Force initialization check
-        initFirebaseAdmin();
+        const app = initFirebaseAdmin();
+        if (!app) throw new Error("Firebase Admin failed to initialize");
 
         // 1. Authenticate User
         const authHeader = request.headers.get("Authorization");
@@ -37,7 +27,7 @@ export async function POST(request: Request) {
         }
         const idToken = authHeader.split("Bearer ")[1];
         console.log("[Stage V3 API] Verifying ID token...");
-        const decodedToken = await getAuth().verifyIdToken(idToken);
+        const decodedToken = await getAuth(app).verifyIdToken(idToken);
         const userId = decodedToken.uid;
 
         const { image, style, roomType, projectId, prompt, isRetry } = await request.json();
@@ -96,7 +86,7 @@ export async function POST(request: Request) {
 
         // 3. AI Pipeline (Gemini 3.0 Pro Image Preview)
         const gcpProjectId = getProjectId();
-        const accessToken = await getAccessToken();
+        const accessToken = await getAccessToken(app);
         const base64Image = image.replace(/^data:image\/\w+;base64,/, "");
 
         // ENDPOINT: Global (Gemini 3 Pro)

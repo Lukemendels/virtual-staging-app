@@ -3,8 +3,7 @@ import { getFirestore } from "firebase-admin/firestore";
 
 export function initFirebaseAdmin() {
     if (getApps().length > 0) {
-        // console.log("[Firebase Admin] Default app already exists.");
-        return;
+        return getApps()[0];
     }
 
     console.log("[Firebase Admin] No default app found. Initializing...");
@@ -17,16 +16,18 @@ export function initFirebaseAdmin() {
                 jsonString = Buffer.from(jsonString, "base64").toString("utf-8");
             }
             const serviceAccount = JSON.parse(jsonString);
-            initializeApp({
+            const app = initializeApp({
                 credential: cert(serviceAccount),
             });
             console.log("[Firebase Admin] initializeApp() called successfully.");
+            return app;
         } catch (error) {
             console.error("[Firebase Admin] Failed to parse SERVICE_ACCOUNT_KEY:", error);
         }
     } else {
         console.warn("[Firebase Admin] SERVICE_ACCOUNT_KEY is not defined. Firebase Admin not initialized.");
     }
+    return undefined;
 }
 
 // Initialize on import
