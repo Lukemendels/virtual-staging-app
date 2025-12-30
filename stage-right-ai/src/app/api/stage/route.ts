@@ -28,6 +28,11 @@ function getProjectId() {
 }
 
 export async function POST(request: Request) {
+    let userId: string | undefined;
+    let deductCredit: boolean = false;
+    let finalProjectId: string | undefined;
+    let projectId: string | undefined;
+
     try {
         // Force initialization check
         const app = initFirebaseAdmin();
@@ -41,21 +46,22 @@ export async function POST(request: Request) {
         const idToken = authHeader.split("Bearer ")[1];
         console.log("[Stage V3 API] Verifying ID token...");
         const decodedToken = await getAuth(app).verifyIdToken(idToken);
-        // Move userId and deductCredit to outer scope for reliable catch-block access
-        var userId = decodedToken.uid;
+        userId = decodedToken.uid;
 
-        const { image, style, roomType, projectId, prompt, isRetry } = await request.json();
+        const body = await request.json();
+        const { image, style, roomType, prompt, isRetry } = body;
+        projectId = body.projectId;
 
         if (!image) {
             return NextResponse.json({ error: "Image is required" }, { status: 400 });
         }
 
         // 2. Credit / Edit Logic
-        var finalProjectId = projectId;
+        finalProjectId = projectId;
         let newEditsRemaining = 0;
 
         // Only deduct credit if this is NOT an automated retry
-        var deductCredit = !isRetry;
+        deductCredit = !isRetry;
 
         if (deductCredit) {
             const dbInstance = getFirestore(app);
