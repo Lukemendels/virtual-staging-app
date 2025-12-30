@@ -1,15 +1,13 @@
 import { NextResponse } from "next/server";
 import * as admin from "firebase-admin";
-import { db } from "@/lib/firebase-admin"; // Triggers shared initialization
+import { initFirebaseAdmin } from "@/lib/firebase-admin";
 import { callVertexWithRetry } from "@/lib/vertex-utils";
-
-// Ensure init runs
-if (!admin.apps.length) {
-    // This block might be redundant if db import triggers it, but safe to keep empty or rely on lib
-}
 
 export async function POST(request: Request) {
     try {
+        // Force initialization check
+        initFirebaseAdmin();
+
         const { image, upscaleFactor = "x2" } = await request.json();
 
         if (!image) {

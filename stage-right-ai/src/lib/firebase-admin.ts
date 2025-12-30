@@ -1,29 +1,22 @@
 import { initializeApp, getApps, cert, getApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 
-const serviceAccountKey = process.env.SERVICE_ACCOUNT_KEY;
+export function initFirebaseAdmin() {
+    if (getApps().length > 0) {
+        // console.log("[Firebase Admin] Default app already exists.");
+        return;
+    }
 
-console.log("[Firebase Admin] Loading firebase-admin.ts...");
-
-const defaultApp = getApps().find(app => app.name === "[DEFAULT]");
-
-if (!defaultApp) {
     console.log("[Firebase Admin] No default app found. Initializing...");
+    const serviceAccountKey = process.env.SERVICE_ACCOUNT_KEY;
+
     if (serviceAccountKey) {
-        console.log(`[Firebase Admin] Found SERVICE_ACCOUNT_KEY (Length: ${serviceAccountKey.length})`);
         try {
             let jsonString = serviceAccountKey;
             if (!jsonString.trim().startsWith("{")) {
-                console.log("[Firebase Admin] Key does not start with '{', attempting Base64 decode...");
                 jsonString = Buffer.from(jsonString, "base64").toString("utf-8");
-                console.log(`[Firebase Admin] Base64 decode complete. First char: ${jsonString.trim().charAt(0)}`);
-            } else {
-                console.log("[Firebase Admin] Key starts with '{', assuming JSON string.");
             }
-
             const serviceAccount = JSON.parse(jsonString);
-            console.log(`[Firebase Admin] Parsed service account. Project ID: ${serviceAccount.project_id}`);
-
             initializeApp({
                 credential: cert(serviceAccount),
             });
@@ -34,9 +27,10 @@ if (!defaultApp) {
     } else {
         console.warn("[Firebase Admin] SERVICE_ACCOUNT_KEY is not defined. Firebase Admin not initialized.");
     }
-} else {
-    console.log(`[Firebase Admin] Default app already exists.`);
 }
+
+// Initialize on import
+initFirebaseAdmin();
 
 // Export db safely. If initialization failed, this might be an empty object or throw at runtime when used,
 // which is preferable to crashing the build.
