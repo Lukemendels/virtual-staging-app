@@ -185,8 +185,7 @@ export const UploadZone = () => {
                 setProjectId(data.projectId);
                 setEditsRemaining(data.editsRemaining);
 
-                // Set default filename
-                setFileName(`${selectedRoomType}-${selectedStyle}`);
+
 
                 if (data.verification) {
                     console.log("Verification passed:", data.verification);
