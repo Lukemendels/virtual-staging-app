@@ -41,7 +41,7 @@ export const UploadZone = () => {
     const [showCreditModal, setShowCreditModal] = useState(false);
     const [isPaid, setIsPaid] = useState(false);
     const [tweakPrompt, setTweakPrompt] = useState("");
-    const [fileName, setFileName] = useState("");
+    const [tweakPrompt, setTweakPrompt] = useState("");
 
     // Check for payment success
     useEffect(() => {
@@ -230,6 +230,15 @@ export const UploadZone = () => {
     const handleUpscaleAndDownload = async (factor: "x2" | "x4") => {
         if (!stagedImage) return;
 
+        // Prompt user for filename before processing
+        const defaultName = `${selectedRoomType}-${selectedStyle}`;
+        const userFilename = window.prompt("Enter a name for your file:", defaultName);
+
+        // If user cancels, stop
+        if (userFilename === null) return;
+
+        const finalFilename = userFilename.trim() || defaultName;
+
         setLoading(true);
         try {
             // 1. Upscale
@@ -266,7 +275,7 @@ export const UploadZone = () => {
             // 2. Download
             const link = document.createElement("a");
             link.href = finalImage;
-            link.download = `${fileName || "staged-room"}${factor === "x4" ? "-4k" : "-mls"}.jpg`;
+            link.download = `${finalFilename}${factor === "x4" ? "-4k" : "-mls"}.jpg`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -395,17 +404,6 @@ export const UploadZone = () => {
                                 <img src={stagedImage} alt="Staged" className="w-full h-auto rounded-md" />
                             </CardContent>
                             <CardFooter className="flex-col gap-4 p-6">
-                                {/* File Name Input */}
-                                <div className="w-full space-y-2">
-                                    <label className="text-sm font-medium text-slate-300">File Name</label>
-                                    <Input
-                                        value={fileName}
-                                        onChange={(e) => setFileName(e.target.value)}
-                                        className="bg-slate-900 border-slate-700 text-white"
-                                        placeholder="e.g. Living-Room-Draft-1"
-                                    />
-                                </div>
-
                                 {/* Dual Download Buttons */}
                                 <div className="grid grid-cols-2 gap-3 w-full pt-2">
                                     <Button
