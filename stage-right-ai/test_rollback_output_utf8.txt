@@ -1,0 +1,116 @@
+﻿
+> stage-right-ai@0.1.0 test:logic
+> ts-node -O "{\"module\":\"commonjs\"}" debug-prompts.ts
+
+================================================================================
+≡ƒ¢á∩╕Å  PROMPT ENGINE DIAGNOSTIC TOOL
+================================================================================
+
+
+--------------------------------------------------------------------------------
+≡ƒº¬ Scenario A: LUXURY INTERIOR (Gemini 3 Pro)
+--------------------------------------------------------------------------------
+INPUTS: Room=living_room, Style=luxury, Model=v3
+
+≡ƒôä GENERATED PROMPT:
+
+        ROLE: You are an expert Interior Architect and Feng Shui Consultant.
+        GOAL: Stage this room to maximize 'Buyer Emotional Safety' and spatial flow.
+
+        1. LIGHTING & PHYSICS (The Realism Layer):
+           - Anchor furniture with ambient occlusion shadows.
+           - Match the color temperature of the existing light.
+           - Respect the floor plane and vanishing points absolutely.
+
+        2. SPATIAL PSYCHOLOGY (Feng Shui):
+           
+    - COMMAND POSITION: The primary furniture must face the entry or focal point.
+    - CHI FLOW: Maintain wide, clear walking paths.
+    - BALANCE: Balance visual weight across the image.
+    
+
+        3. AESTHETIC & TEXTURE:
+           Style: Luxury Contemporary. Textures: Italian boucle fabric, travertine stone (porous), polished chrome, low-profile leather. Vibe: Gallery-like, expensive, curated. Lighting interaction: High contrast shadows.
+
+        4. LAYOUT SPECIFICS:
+           LAYOUT: Create a 'Social Circle'. Orient the sofa in the Command Position. Anchor with a large rug.
+
+        5. USER OVERRIDE:
+           CRITICAL INSTRUCTION: Make it feel like a Succession penthouse
+
+        NEGATIVE CONSTRAINTS (STRICT):
+        - NO blocking the camera view.
+        - NO floating objects.
+        - NO structural changes to walls or ceiling.
+        - NO clutter.
+        
+
+
+--------------------------------------------------------------------------------
+≡ƒº¬ Scenario B: EXTERIOR CURB APPEAL (Gemini 3 Pro)
+--------------------------------------------------------------------------------
+INPUTS: Room=front_yard, Style=curb_appeal, Model=v3
+
+≡ƒôä GENERATED PROMPT:
+
+        ROLE: You are an expert Landscape Architect and Exterior Designer.
+        GOAL: Enhance curb appeal and outdoor living potential.
+
+        1. LIGHTING & PHYSICS (The Realism Layer):
+           - SUN DIRECTION: Match the sun angle and cast hard shadows from trees/structures.
+           - FOLIAGE: Plants must look organic and interact with the wind/gravity (no stiff models).
+           - Respect the ground plane/terrain and vanishing points absolutely.
+
+        2. SPATIAL PSYCHOLOGY (Curb Appeal):
+           
+        - WELCOMING ENTRY: Lead the eye to the front door. Use plants to frame the entrance, not block it.
+        - CLEAN LINES: Ensure edging between grass and beds is sharp.
+        
+
+        3. AESTHETIC & TEXTURE:
+           Style: Real Estate Curb Appeal. Visuals: Freshly mulched flower beds, vibrant green lawn (striping), blooming hydrangeas, potted boxwoods by the door. Vibe: Welcoming, manicured, clean.
+
+        4. LAYOUT SPECIFICS:
+           LAYOUT: Enhance the foundation planting. Add symmetry with matching planters by the door. Ensure the driveway is clear. Green up the lawn.
+
+        5. USER OVERRIDE:
+           CRITICAL INSTRUCTION: Add some purple flowers
+
+        NEGATIVE CONSTRAINTS (STRICT):
+        - NO blocking the front door, driveway, or windows.
+        - NO floating objects.
+        - NO changing the house structure, siding, or roof.
+        - NO dead plants or brown grass.
+        
+
+
+--------------------------------------------------------------------------------
+≡ƒº¬ Scenario C: INDUSTRIAL BASEMENT (Gemini 2.5 Flash)
+--------------------------------------------------------------------------------
+INPUTS: Room=basement, Style=industrial, Model=v2
+
+≡ƒôä GENERATED PROMPT:
+
+    Role: Expert Interior Designer.
+    Task: Virtually stage this photo with photorealistic furniture.
+    Room Type: basement
+    Design Style: Style: Industrial Loft. Textures: Distressed cognac leather, cold rolled steel, reclaimed rough-sawn wood, cowhide. Vibe: Masculine, raw, structural. Lighting interaction: Moody, directional.
+    
+    Instructions:
+    - Place furniture to showcase the room's best features.
+    - Ensure all items are scaled correctly to the room.
+    - Match lighting, shadows, and perspective of the original photo perfectly.
+    - Focus on appropriate furniture layout for this room type.
+
+    
+
+    Constraints:
+    - Do not change structural elements (walls, windows, floors).
+    - Do not cover the foreground or camera lens.
+    - Keep the room looking spacious.
+    
+
+
+================================================================================
+Γ£à DIAGNOSTIC COMPLETE
+================================================================================
