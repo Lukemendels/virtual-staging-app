@@ -1,24 +1,11 @@
 import { NextResponse } from "next/server";
 import * as admin from "firebase-admin";
+import { db } from "@/lib/firebase-admin"; // Triggers shared initialization
 import { callVertexWithRetry } from "@/lib/vertex-utils";
 
-// 1. Initialize Firebase Admin if not already running
-// 1. Initialize Firebase Admin if not already running
+// Ensure init runs
 if (!admin.apps.length) {
-    try {
-        let serviceAccountKey = process.env.SERVICE_ACCOUNT_KEY as string;
-        if (serviceAccountKey) {
-            if (!serviceAccountKey.trim().startsWith("{")) {
-                serviceAccountKey = Buffer.from(serviceAccountKey, "base64").toString("utf-8");
-            }
-            const serviceAccount = JSON.parse(serviceAccountKey);
-            admin.initializeApp({
-                credential: admin.credential.cert(serviceAccount),
-            });
-        }
-    } catch (error) {
-        console.error("Firebase Admin Init Error:", error);
-    }
+    // This block might be redundant if db import triggers it, but safe to keep empty or rely on lib
 }
 
 export async function POST(request: Request) {
