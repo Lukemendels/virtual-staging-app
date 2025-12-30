@@ -67,6 +67,7 @@ export async function POST(request: Request) {
             const dbInstance = getFirestore(app);
 
             await dbInstance.runTransaction(async (transaction) => {
+                if (!userId) throw new Error("User ID missing in transaction");
                 const userRef = dbInstance.collection("users").doc(userId);
                 const userDoc = await transaction.get(userRef);
                 if (!userDoc.exists) throw new Error("User not found");
@@ -233,6 +234,10 @@ export async function POST(request: Request) {
                         // New Project: Refund +1 Credit to User
                         // Note: If we created a project doc (finalProjectId), we technically leave a "glitch" empty project.
                         // But more importantly, we must restore the user's credit balance.
+                        if (!userId) {
+                            console.error("[Safety Net] UserId missing during refund");
+                            return;
+                        }
                         const userRef = dbInstance.collection("users").doc(userId);
                         const uDoc = await transaction.get(userRef);
                         if (uDoc.exists) {
