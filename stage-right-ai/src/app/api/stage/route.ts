@@ -12,7 +12,18 @@ async function getAccessToken(app: admin.app.App) {
     return accessTokenObj?.access_token;
 }
 
-// ... (getProjectId remains same)
+// Helper to get Project ID
+function getProjectId() {
+    let serviceAccountKey = process.env.SERVICE_ACCOUNT_KEY as string;
+    if (!serviceAccountKey) {
+        throw new Error("SERVICE_ACCOUNT_KEY is not defined");
+    }
+    if (!serviceAccountKey.trim().startsWith("{")) {
+        serviceAccountKey = Buffer.from(serviceAccountKey, "base64").toString("utf-8");
+    }
+    const serviceAccount = JSON.parse(serviceAccountKey);
+    return serviceAccount.project_id;
+}
 
 export async function POST(request: Request) {
     try {
