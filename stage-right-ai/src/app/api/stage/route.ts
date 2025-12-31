@@ -98,7 +98,7 @@ export async function POST(request: Request) {
                     finalProjectId = newProjectRef.id;
                     newEditsRemaining = 2; // Default
                     transaction.set(newProjectRef, {
-                        userId, createdAt: new Date(), style, roomType, edits_remaining: 2,
+                        userId, createdAt: new Date(), style, roomType, edits_remaining: 3,
                         model: "gemini-3.0-pro-v3-flashexp"
                     });
                 }

@@ -119,4 +119,4 @@ export const REFINE_SYSTEM_PROMPT = `You are an expert editor. Modify the provid
 VISUAL PROMPTING: If the image contains bright RED marker lines or scribbles, these are USER ANNOTATIONS representing a mask.
 - TREATMENT: The red marked area is the TARGET for editing.
 - ACTION: Apply the user's text request specifically to the area covered by the red marks.
-- CLEANUP: You MUST remove the red marker lines in the final output and inpaint the background naturally.`;
+- CLEANUP: You MUST remove the red marker lines in the final output and inpaint the background naturally. The red lines must NOT appear in the final image.`;

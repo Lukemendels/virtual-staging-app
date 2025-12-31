@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Upload, Loader2, Sparkles, Download, Lock, Unlock, RefreshCw, PenLine } from "lucide-react";
+import { Upload, Loader2, Sparkles, Download, Lock, Unlock, RefreshCw, PenLine, Undo, RotateCcw } from "lucide-react";
 import { AnnotationCanvas } from "./AnnotationCanvas";
 import { CreditModal } from "./CreditModal";
 import { ReactSketchCanvasRef } from "react-sketch-canvas";
@@ -131,6 +131,11 @@ export const UploadZone = () => {
         }
     };
 
+    // Edit & History State
+    const [isEditing, setIsEditing] = useState(false);
+    const [history, setHistory] = useState<string[]>([]);
+    const [historyIndex, setHistoryIndex] = useState(-1);
+
     const handleStage = async (isRetry = false) => {
         if (!preview || !user) return;
 
@@ -185,7 +190,9 @@ export const UploadZone = () => {
                 setProjectId(data.projectId);
                 setEditsRemaining(data.editsRemaining);
 
-
+                // Init History
+                setHistory([data.result]);
+                setHistoryIndex(0);
 
                 if (data.verification) {
                     console.log("Verification passed:", data.verification);
@@ -206,6 +213,73 @@ export const UploadZone = () => {
             // But wait, if we await handleStage(true), the inner one sets loading=false at its end.
             // So we just strictly set it false here.
             setLoading(false);
+        }
+    };
+
+    const handleEdit = async () => {
+        if (!stagedImage || !canvasRef.current || !projectId || !user) return;
+
+        setLoading(true);
+        try {
+            // Export canvas (image + red lines)
+            // We use exportImage which gives us the drawn layer. 
+            // WAIT - Vertex needs the whole image (bg + red lines).
+            // AnnotationCanvas is set to `exportWithBackgroundImage={true}` so it should return merged.
+            const mergedImage = await canvasRef.current.exportImage("jpeg");
+
+            const token = await user.getIdToken();
+            const response = await fetch("/api/edit", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${token}` },
+                body: JSON.stringify({
+                    image: mergedImage,
+                    prompt: tweakPrompt, // User's text instruction
+                    roomType: selectedRoomType,
+                    style: selectedStyle,
+                    projectId: projectId
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.error) {
+                toast.error(data.error);
+            } else if (data.result) {
+                setStagedImage(data.result);
+                // Update History
+                const newHistory = [...history.slice(0, historyIndex + 1), data.result];
+                setHistory(newHistory);
+                setHistoryIndex(newHistory.length - 1);
+
+                // Decrement local edits (visual only, server handles truth)
+                if (typeof editsRemaining === 'number') setEditsRemaining(prev => (prev ? prev - 1 : 0));
+
+                setIsEditing(false);
+                setTweakPrompt(""); // Clear prompt after edit
+                toast.success("Edit applied!");
+            }
+
+        } catch (e) {
+            console.error("Edit failed", e);
+            toast.error("Edit failed");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const undoHistory = () => {
+        if (historyIndex > 0) {
+            const newIndex = historyIndex - 1;
+            setHistoryIndex(newIndex);
+            setStagedImage(history[newIndex]);
+        }
+    };
+
+    const redoHistory = () => {
+        if (historyIndex < history.length - 1) {
+            const newIndex = historyIndex + 1;
+            setHistoryIndex(newIndex);
+            setStagedImage(history[newIndex]);
         }
     };
 
@@ -374,57 +448,102 @@ export const UploadZone = () => {
                 {/* Results View */}
                 {stagedImage && (
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in fade-in zoom-in-95 duration-500">
-                        {/* Original */}
-                        <Card className="bg-slate-950 border-slate-800 h-full flex flex-col shadow-xl">
-                            <CardHeader className="flex flex-row items-center space-y-0 min-h-[80px]">
-                                <CardTitle className="text-slate-400">Original Room</CardTitle>
-                            </CardHeader>
-                            <CardContent className="flex-1 flex items-center justify-center p-2 overflow-hidden bg-black/40 rounded-lg mx-6 mb-6 border border-slate-800/50">
-                                <img src={preview!} alt="Original" className="w-full h-auto rounded-md" />
-                            </CardContent>
-                            <CardFooter className="p-4 justify-center">
-                                <Button variant="outline" onClick={() => { setStagedImage(null); setPreview(null); setProjectId(null); setTweakPrompt(""); }} className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white">
-                                    Stage Another Room
-                                </Button>
-                            </CardFooter>
-                        </Card>
-
-                        {/* Staged */}
-                        <Card className="bg-slate-950 border-indigo-500/30 shadow-[0_0_30px_rgba(79,70,229,0.15)] h-full flex flex-col">
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 min-h-[80px]">
-                                <CardTitle className="text-indigo-400 flex items-center gap-2">
-                                    <Sparkles className="w-5 h-5" /> AI Staged (Verified)
-                                </CardTitle>
-                                <div className="flex items-center gap-2">
-                                    <span className="text-xs font-medium px-2 py-1 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">{selectedStyle}</span>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="flex-1 flex items-center justify-center p-2 overflow-hidden bg-black/40 rounded-lg mx-6 border border-slate-800/50">
-                                <img src={stagedImage} alt="Staged" className="w-full h-auto rounded-md" />
-                            </CardContent>
-                            <CardFooter className="flex-col gap-4 p-6">
-                                {/* Dual Download Buttons */}
-                                <div className="grid grid-cols-2 gap-3 w-full pt-2">
-                                    <Button
-                                        className="w-full bg-slate-800 hover:bg-slate-700 text-white border border-slate-700"
-                                        onClick={() => handleUpscaleAndDownload("x2")}
-                                        disabled={loading}
-                                    >
-                                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
-                                        MLS Optimized
+                        {/* Original / Controls */}
+                        <div className="flex flex-col gap-6 h-full">
+                            <Card className="bg-slate-950 border-slate-800 h-full flex flex-col shadow-xl">
+                                <CardHeader className="flex flex-row items-center space-y-0 min-h-[80px]">
+                                    <CardTitle className="text-slate-400">Original Room</CardTitle>
+                                </CardHeader>
+                                <CardContent className="flex-1 flex items-center justify-center p-2 overflow-hidden bg-black/40 rounded-lg mx-6 mb-6 border border-slate-800/50">
+                                    <img src={preview!} alt="Original" className="w-full h-auto rounded-md" />
+                                </CardContent>
+                                <CardFooter className="p-4 justify-center">
+                                    <Button variant="outline" onClick={() => { setStagedImage(null); setPreview(null); setProjectId(null); setTweakPrompt(""); setHistory([]); setIsEditing(false); }} className="border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white">
+                                        Stage Another Room
                                     </Button>
+                                </CardFooter>
+                            </Card>
+                        </div>
 
-                                    <Button
-                                        className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-lg shadow-indigo-500/20"
-                                        onClick={() => handleUpscaleAndDownload("x4")}
-                                        disabled={loading}
-                                    >
-                                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-                                        Download 4K
-                                    </Button>
-                                </div>
-                            </CardFooter>
-                        </Card>
+                        {/* Staged / Edit Canvas */}
+                        <div className="flex flex-col gap-6 h-full">
+                            <Card className={`bg-slate-950 transition-all duration-300 ${isEditing ? "border-indigo-500 ring-1 ring-indigo-500/50" : "border-indigo-500/30"} shadow-[0_0_30px_rgba(79,70,229,0.15)] h-full flex flex-col`}>
+                                <CardHeader className="flex flex-row items-center justify-between space-y-0 min-h-[80px]">
+                                    <div className="flex flex-col">
+                                        <CardTitle className="text-indigo-400 flex items-center gap-2">
+                                            {isEditing ? <PenLine className="w-5 h-5 text-red-400" /> : <Sparkles className="w-5 h-5" />}
+                                            {isEditing ? "Director Mode (Draw Mask)" : "AI Staged (Verified)"}
+                                        </CardTitle>
+                                        {isEditing && <p className="text-xs text-slate-400 mt-1">Draw RED over area to change</p>}
+                                    </div>
+
+                                    {/* Edit Mode Toggle & History */}
+                                    <div className="flex items-center gap-2">
+                                        {!isEditing && (
+                                            <>
+                                                {historyIndex > 0 && <Button variant="ghost" size="icon" onClick={undoHistory} aria-label="Undo"><Undo className="w-4 h-4" /></Button>}
+                                                {historyIndex < history.length - 1 && <Button variant="ghost" size="icon" onClick={redoHistory} aria-label="Redo"><RotateCcw className="w-4 h-4 scale-x-[-1]" /></Button>}
+
+                                                <Button variant="outline" size="sm" onClick={() => setIsEditing(true)} disabled={editsRemaining === 0} className="border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/10">
+                                                    <PenLine className="w-4 h-4 mr-2" />
+                                                    Edit {typeof editsRemaining === 'number' && `(${editsRemaining})`}
+                                                </Button>
+                                            </>
+                                        )}
+                                    </div>
+                                </CardHeader>
+
+                                <CardContent className="flex-1 flex items-center justify-center p-2 overflow-hidden bg-black/40 rounded-lg mx-6 border border-slate-800/50 relative min-h-[400px]">
+                                    {isEditing ? (
+                                        <AnnotationCanvas width="100%" height="100%" backgroundImage={stagedImage ?? undefined} ref={canvasRef} onExport={() => { }} />
+                                    ) : (
+                                        <img src={stagedImage} alt="Staged" className="w-full h-auto rounded-md" />
+                                    )}
+                                </CardContent>
+
+                                <CardFooter className="flex-col gap-4 p-6">
+                                    {isEditing ? (
+                                        <div className="w-full space-y-3">
+                                            <Input
+                                                autoFocus
+                                                placeholder="Instruction: e.g. 'Change to blue velvet sofa' or 'Remove rug'"
+                                                value={tweakPrompt}
+                                                onChange={(e) => setTweakPrompt(e.target.value)}
+                                                className="bg-slate-900 border-slate-700 text-white"
+                                            />
+                                            <div className="flex gap-2">
+                                                <Button variant="outline" className="flex-1 border-slate-700 hover:bg-slate-800" onClick={() => setIsEditing(false)}>Cancel</Button>
+                                                <Button className="flex-1 bg-indigo-600 hover:bg-indigo-500" onClick={handleEdit} disabled={loading}>
+                                                    {loading ? <Loader2 className="animate-spin w-4 h-4 mr-2" /> : <Sparkles className="w-4 h-4 mr-2" />}
+                                                    Update Scene
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        /* Download Buttons */
+                                        <div className="grid grid-cols-2 gap-3 w-full pt-2">
+                                            <Button
+                                                className="w-full bg-slate-800 hover:bg-slate-700 text-white border border-slate-700"
+                                                onClick={() => handleUpscaleAndDownload("x2")}
+                                                disabled={loading}
+                                            >
+                                                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Download className="mr-2 h-4 w-4" />}
+                                                MLS Optimized
+                                            </Button>
+
+                                            <Button
+                                                className="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-lg shadow-indigo-500/20"
+                                                onClick={() => handleUpscaleAndDownload("x4")}
+                                                disabled={loading}
+                                            >
+                                                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                                                Download 4K
+                                            </Button>
+                                        </div>
+                                    )}
+                                </CardFooter>
+                            </Card>
+                        </div>
                     </div>
                 )}
             </div>
