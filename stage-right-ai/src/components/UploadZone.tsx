@@ -478,13 +478,36 @@ export const UploadZone = () => {
                                     </div>
 
                                     {/* Edit Mode Toggle & History */}
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-3">
                                         {!isEditing && (
                                             <>
-                                                {historyIndex > 0 && <Button variant="ghost" size="icon" onClick={undoHistory} aria-label="Undo"><Undo className="w-4 h-4" /></Button>}
-                                                {historyIndex < history.length - 1 && <Button variant="ghost" size="icon" onClick={redoHistory} aria-label="Redo"><RotateCcw className="w-4 h-4 scale-x-[-1]" /></Button>}
+                                                {/* History Controls */}
+                                                <div className="flex items-center bg-slate-900 rounded-md border border-slate-800 p-0.5">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={undoHistory}
+                                                        disabled={historyIndex <= 0}
+                                                        className={`h-8 px-2 ${historyIndex <= 0 ? 'text-slate-600' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}
+                                                        title="Undo"
+                                                    >
+                                                        <Undo className="w-4 h-4 mr-1.5" />
+                                                        Undo
+                                                    </Button>
+                                                    <div className="w-px h-4 bg-slate-800 mx-0.5" />
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={redoHistory}
+                                                        disabled={historyIndex >= history.length - 1}
+                                                        className={`h-8 px-2 ${historyIndex >= history.length - 1 ? 'text-slate-600' : 'text-slate-300 hover:text-white hover:bg-slate-800'}`}
+                                                        title="Redo"
+                                                    >
+                                                        <RotateCcw className="w-4 h-4 scale-x-[-1]" />
+                                                    </Button>
+                                                </div>
 
-                                                <Button variant="outline" size="sm" onClick={() => setIsEditing(true)} disabled={editsRemaining === 0} className="border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/10">
+                                                <Button variant="outline" size="sm" onClick={() => setIsEditing(true)} disabled={editsRemaining === 0} className="border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/10 ml-2">
                                                     <PenLine className="w-4 h-4 mr-2" />
                                                     Edit {typeof editsRemaining === 'number' && `(${editsRemaining})`}
                                                 </Button>
